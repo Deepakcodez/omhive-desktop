@@ -8,7 +8,17 @@ const api = {
   },
   removeIdleTimeListener: () => {
     ipcRenderer.removeAllListeners('idle-time')
-  }
+  },
+  onActivityUpdate: (cb: (session: unknown) => void) => {
+    ipcRenderer.on('activity:update', (_event, session) => cb(session))
+  },
+  // Fetch sessions already buffered before the window opened
+  getPendingSessions: () => ipcRenderer.invoke('activity:get-pending'),
+  // Clean up listener when component unmounts
+  removeActivityListeners: () => {
+    ipcRenderer.removeAllListeners('activity:update')
+  },
+  getAllSession: () => ipcRenderer.invoke('activity:get-all')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
