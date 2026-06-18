@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { username } from 'better-auth/plugins'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -18,6 +17,12 @@ function RouteComponent() {
   const getWorkingStatus = (): "working" | "break" | "logged_out" | null => {
     const status = localStorage.getItem('status')
     return status as "working" | "break" | "logged_out" | null
+  }
+  const getUserDetail = (): { name: string, id: string } | null => {
+    const name = localStorage.getItem('userName')
+    const id = localStorage.getItem('userId')
+    if (name && id) return { name, id }
+    return null
   }
   const setWorkingStatus = (status: "working" | "break" | "logged_out") => {
     localStorage.setItem('status', status)
@@ -51,6 +56,7 @@ function RouteComponent() {
       }
       if (resp?.userId) {
         localStorage.setItem("userId", resp.userId)
+        localStorage.setItem("userName", resp.username)
         localStorage.setItem("attendanceId", resp.attendanceId)
         setWorkingStatus('working')
         toast.success("Logged in successfully")
@@ -100,7 +106,30 @@ function RouteComponent() {
 
     }
     if (action === 'LOGOUT') {
-      // await window.api.logoutUser(bodyData)
+      const attandanceId = localStorage.getItem('attendanceId');
+      if (!attandanceId) {
+        await window.api.alert({ title: "Not Logged in", message: "You are not logged in", type: "error" })
+        return
+      }
+      try {
+        const resp = await window.api.logoutUser({ attendanceId: attandanceId })
+        if (resp === null) {
+          await window.api.alert({ title: "Logout Failed", message: "You are not authorized to logout", type: "error" })
+          return
+        }
+        console.log("ress", resp)
+        if (resp?.alreadyLoggedOut) {
+          await window.api.alert({ title: "Already Logged Out", message: "You are already logged out", type: "info" })
+        } else {
+          setWorkingStatus('logged_out')
+          await window.api.alert({ type: 'info', title: "Logged Out Successfully", message: `You are logged out successfully. You worked for ${((resp.totalWorkSeconds || 0) / 3600).toFixed(2)} hours` })
+        }
+
+      } catch (error) {
+        await window.api.alert({ title: "Logout Failed", message: "You are not authorized to logout", type: "error" })
+
+      }
+
     }
   }
 
@@ -124,19 +153,36 @@ function RouteComponent() {
         </div>
 
         {/* Username */}
-        <div className="mb-6">
-          <label className="block mb-2 font-medium text-foreground">
-            Username
-          </label>
+        {
 
-          <input
-            type="text"
-            placeholder="Enter username"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            className="w-full   bg-foreground p-3 outline-none rounded-full"
-          />
-        </div>
+          !getUserDetail() &&
+          < div className="mb-6">
+
+
+            <label className="block mb-2 font-medium text-foreground">
+              Username
+            </label>
+
+            <input
+              type="text"
+              placeholder="Enter username"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              className="w-full   bg-foreground p-3 outline-none rounded-full"
+            />
+          </div>
+        }
+
+        {
+          getUserDetail() && (
+            < div className="mb-6">
+
+
+              <h1 className='text-3xl font-bold text-foreground'>Welcome Back <span className='text-primary uppercase'>{getUserDetail()?.name}</span>!</h1>
+
+            </div>
+          )
+        }
 
         {/* Buttons */}
         <div className="grid grid-cols-3 gap-3">
@@ -176,6 +222,6 @@ function RouteComponent() {
           Status: {getWorkingStatus()?.toUpperCase() || "Not Logged In Yet"}
         </div>
       </div>
-    </div>
+    </div >
   )
 }

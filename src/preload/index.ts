@@ -34,11 +34,7 @@ const api = {
     attendanceId: string,
   }) => ipcRenderer.invoke('user:resume', payload),
   logoutUser: (payload: {
-    username: string,
-    hostname: string,
-    os: string,
-    systemUsername: string,
-    startTime: number,
+    attendanceId: string,
   }) => ipcRenderer.invoke('user:logout', payload),
 
 

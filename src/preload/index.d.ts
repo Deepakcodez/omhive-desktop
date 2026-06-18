@@ -12,6 +12,7 @@ interface Api {
     username: string,
   }) => Promise<{
     userId: string,
+    username: string,
     attendanceId: string,
     existing: boolean,
     loginTime: Date
@@ -27,8 +28,13 @@ interface Api {
   }>
   resumeUser: (payload: { attendanceId: string }) => Promise<{ durationSeconds: number }>
   logoutUser: (payload: {
-    username: string,
-  }) => Promise<void>
+    attendanceId: string,
+  }) => Promise<{
+    alreadyLoggedOut: false;
+    logoutTime: Date;
+    totalWorkSeconds: number;
+    totalBreakSeconds: number;
+  }>
 
 
   alert: (payload: {
