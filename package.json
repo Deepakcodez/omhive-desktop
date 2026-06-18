@@ -30,6 +30,7 @@
     "better-auth": "^1.6.19",
     "electron-store": "^11.0.2",
     "get-windows": "^9.3.0",
+    "react-hot-toast": "^2.6.0",
     "recharts": "^3.8.1",
     "tailwindcss": "^4.3.1"
   },

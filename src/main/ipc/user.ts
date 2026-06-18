@@ -16,7 +16,7 @@ export function loginUserIpc() {
         }
         console.log('loginUserIpc : ', bodyData)
         try {
-            const response = await fetch('http://localhost:5001/api/user/login', {
+            const response = await fetch(API_ENDPOINT + '/user/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -24,17 +24,56 @@ export function loginUserIpc() {
                 body: JSON.stringify(bodyData),
             })
 
-            const text = await response.text()
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const { data } = await response.json()
+            return data
+        } catch (error) {
+            console.error('Error logging in user:', error)
+            return null
+        }
+    })
+    ipcMain.handle('user:break', async (_, payload: { attendanceId: string }) => {
 
-            console.log('Status:', response.status)
-            console.log('Response:', text)
+        try {
+            const response = await fetch(API_ENDPOINT + '/user/break', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
-            console.log('User logged in successfully')
+            const { data } = await response.json()
+            return data
         } catch (error) {
-            console.error('Error logging in user:', error)
+            console.error('Error in taking break:', error)
+            return null
+        }
+    })
+    ipcMain.handle('user:resume', async (_, payload: { attendanceId: string }) => {
+
+        try {
+            const response = await fetch(API_ENDPOINT + '/user/resume', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const { data } = await response.json()
+            return data
+        } catch (error) {
+            console.error('Error  in resuming user:', error)
+            return null
         }
     })
 }

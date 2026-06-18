@@ -1,19 +1,28 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { username } from 'better-auth/plugins'
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
 
-// userName, startTime, hostname, systemUsername, os
 
 
 function RouteComponent() {
   const [userName, setUserName] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [workStatus, setWorkStatus] = useState<"working" | "break" | "logged_out" | null>(null)
 
+  const getWorkingStatus = (): "working" | "break" | "logged_out" | null => {
+    const status = localStorage.getItem('status')
+    return status as "working" | "break" | "logged_out" | null
+  }
+  const setWorkingStatus = (status: "working" | "break" | "logged_out") => {
+    localStorage.setItem('status', status)
+    setWorkStatus(status)
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -25,10 +34,70 @@ function RouteComponent() {
 
   const handleAction = async (action: string) => {
     if (action === 'LOGIN') {
-      await window.api.loginUser({ username: userName })
+
+      if (!userName.trim()) {
+        await window.api.alert({ title: "Username Required", message: "Please enter your username", type: "error" })
+        return
+      }
+
+      const resp = await window.api.loginUser({ username: userName })
+      if (resp === null) {
+        await window.api.alert({ title: "Login Failed", message: "You are not authorized to login", type: "error" })
+        return
+      }
+      if (resp?.existing) {
+        await window.api.alert({ title: "Already Logged in", message: `Your are Already logged in at ${new Date(resp.loginTime).toLocaleString()}`, type: "info" })
+        return
+      }
+      if (resp?.userId) {
+        localStorage.setItem("userId", resp.userId)
+        localStorage.setItem("attendanceId", resp.attendanceId)
+        setWorkingStatus('working')
+        toast.success("Logged in successfully")
+      } else {
+        await window.api.alert({ title: "Login Failed", message: "You are not authorized to login", type: "error" })
+      }
     }
     if (action === 'BREAK') {
-      // await window.api.breakUser({ username: userName })
+      const attandanceId = localStorage.getItem('attendanceId');
+      if (!attandanceId) {
+        await window.api.alert({ title: "Not Logged in", message: "You are not logged in", type: "error" })
+        return
+      }
+      const resp = await window.api.breakUser({ attendanceId: attandanceId })
+      if (resp === null) {
+        await window.api.alert({ title: "Break Failed", message: "You are not authorized to take  break", type: "error" })
+        return
+      }
+      if (resp?.id) {
+        localStorage.setItem("breakId", resp.id)
+        setWorkingStatus('break')
+        toast.success("Break started successfully")
+      } else {
+        await window.api.alert({ title: "Break Failed", message: "You are not authorized to take  break", type: "error" })
+      }
+
+    }
+
+    if (action === 'RESUME') {
+      const attandanceId = localStorage.getItem('attendanceId');
+      if (!attandanceId) {
+        await window.api.alert({ title: "Not on Break", message: "You are not on break", type: "error" })
+        return
+      }
+      const resp = await window.api.resumeUser({ attendanceId: attandanceId })
+      if (resp === null) {
+        await window.api.alert({ title: "Resume Failed", message: "You are not authorized to resume", type: "error" })
+        return
+      }
+      if (resp?.durationSeconds) {
+        localStorage.removeItem("breakId")
+        setWorkingStatus('working')
+        toast.success("Break resumed successfully")
+      } else {
+        await window.api.alert({ title: "Resume Failed", message: "You are not authorized to resume", type: "error" })
+      }
+
     }
     if (action === 'LOGOUT') {
       // await window.api.logoutUser(bodyData)
@@ -79,10 +148,19 @@ function RouteComponent() {
           </button>
 
           <button
-            onClick={() => handleAction('BREAK')}
+            onClick={() => {
+              if (getWorkingStatus() == 'break') {
+                console.log("clling resume")
+                handleAction('RESUME')
+              } else {
+                handleAction('BREAK')
+              }
+            }}
             className="rounded-lg bg-yellow-500 text-white py-3 font-semibold hover:opacity-90"
           >
-            Break
+            {
+              getWorkingStatus() === 'break' ? 'Resume' : 'Break'
+            }
           </button>
 
           <button
@@ -95,7 +173,7 @@ function RouteComponent() {
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-gray-500">
-          Status: Ready
+          Status: {getWorkingStatus()?.toUpperCase() || "Not Logged In Yet"}
         </div>
       </div>
     </div>

@@ -28,20 +28,30 @@ const api = {
     startTime: number,
   }) => ipcRenderer.invoke('user:login', payload),
   breakUser: (payload: {
-    username: string,
-    hostname: string,
-    os: string,
-    systemUsername: string,
-    startTime: number,
+    attendanceId: string,
   }) => ipcRenderer.invoke('user:break', payload),
+  resumeUser: (payload: {
+    attendanceId: string,
+  }) => ipcRenderer.invoke('user:resume', payload),
   logoutUser: (payload: {
     username: string,
     hostname: string,
     os: string,
     systemUsername: string,
     startTime: number,
-  }) => ipcRenderer.invoke('user:logout', payload)
+  }) => ipcRenderer.invoke('user:logout', payload),
+
+
+  alert: (payload: {
+    title: string
+    message: string
+    type?: 'info' | 'warning' | 'error'
+  }) => ipcRenderer.invoke('system:alert', payload),
+
 }
+
+
+
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

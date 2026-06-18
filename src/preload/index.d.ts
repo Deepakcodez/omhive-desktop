@@ -10,12 +10,31 @@ interface Api {
   getSystemInfo: () => Promise<{ hostname: string, os: string, systemUsername: string, timezone: string }>
   loginUser: (payload: {
     username: string,
-  }) => Promise<void>
+  }) => Promise<{
+    userId: string,
+    attendanceId: string,
+    existing: boolean,
+    loginTime: Date
+  } | null>
   breakUser: (payload: {
-    username: string,
-  }) => Promise<void>
+    attendanceId: string,
+  }) => Promise<{
+    startTime: Date;
+    attendanceId: string;
+    id: string;
+    endTime: Date | null;
+    durationSeconds: number;
+  }>
+  resumeUser: (payload: { attendanceId: string }) => Promise<{ durationSeconds: number }>
   logoutUser: (payload: {
     username: string,
+  }) => Promise<void>
+
+
+  alert: (payload: {
+    title: string
+    message: string
+    type?: 'info' | 'warning' | 'error'
   }) => Promise<void>
 }
 
