@@ -18,7 +18,29 @@ const api = {
   removeActivityListeners: () => {
     ipcRenderer.removeAllListeners('activity:update')
   },
-  getAllSession: () => ipcRenderer.invoke('activity:get-all')
+  getAllSession: () => ipcRenderer.invoke('activity:get-all'),
+  getSystemInfo: () => ipcRenderer.invoke('user:get-info'),
+  loginUser: (payload: {
+    username: string,
+    hostname: string,
+    os: string,
+    systemUsername: string,
+    startTime: number,
+  }) => ipcRenderer.invoke('user:login', payload),
+  breakUser: (payload: {
+    username: string,
+    hostname: string,
+    os: string,
+    systemUsername: string,
+    startTime: number,
+  }) => ipcRenderer.invoke('user:break', payload),
+  logoutUser: (payload: {
+    username: string,
+    hostname: string,
+    os: string,
+    systemUsername: string,
+    startTime: number,
+  }) => ipcRenderer.invoke('user:logout', payload)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

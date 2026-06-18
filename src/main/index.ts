@@ -5,23 +5,11 @@ import icon from '../../resources/icon.png?asset'
 import { activeWindow } from 'get-windows'
 import os from 'os'
 import type Store from 'electron-store'
+import { API_ENDPOINT, IDLE_THRESHOLD_SEC, MIN_SESSION_DURATION_SEC, POLL_INTERVAL_MS, SYNC_LOCAL_INTERVAL_MS, SYNC_REMOTE_INTERVAL_MS } from './constants'
+import type { TSession } from './types'
+import { IPC_Handlers } from './ipc'
 
-export type TSession = {
-  startTime: number
-  endTime: number
-  duration: number
-  software: string
-  title: string
-  hostname: string
-  username: string
-}
 
-const IDLE_THRESHOLD_SEC = 60
-const MIN_SESSION_DURATION_SEC = 10
-const SYNC_LOCAL_INTERVAL_MS = 60_000
-const SYNC_REMOTE_INTERVAL_MS = 300_000
-const POLL_INTERVAL_MS = 2_000
-const API_ENDPOINT = 'http://localhost:5001/post-data'
 
 // ── System identity (resolved once at startup) ─────────────────────────────
 const HOSTNAME = os.hostname()
@@ -112,9 +100,9 @@ app.whenReady().then(async () => {
     sessions: store ? store.get('sessions', []) : []
   }))
 
-  createWindow()
+  IPC_Handlers()
 
-  console.log(app.getPath('userData'))
+  createWindow()
   // ── Poll: detect active window every second ─────────────────────────────
   setInterval(async () => {
     const idleTime = powerMonitor.getSystemIdleTime()

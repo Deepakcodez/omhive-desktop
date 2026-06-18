@@ -1,13 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { username } from 'better-auth/plugins'
 import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
+
+// userName, startTime, hostname, systemUsername, os
+
+
 function RouteComponent() {
-  const [username, setUsername] = useState('')
+  const [userName, setUserName] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
+
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -17,32 +23,35 @@ function RouteComponent() {
     return () => clearInterval(timer)
   }, [])
 
-  const handleAction = (action: string) => {
-    console.log({
-      username,
-      action,
-      time: new Date().toISOString(),
-    })
+  const handleAction = async (action: string) => {
+    if (action === 'LOGIN') {
+      await window.api.loginUser({ username: userName })
+    }
+    if (action === 'BREAK') {
+      // await window.api.breakUser({ username: userName })
+    }
+    if (action === 'LOGOUT') {
+      // await window.api.logoutUser(bodyData)
+    }
   }
 
   return (
     <div className="min-h-screen bg-background flex flex-col gap-4 items-center justify-center p-4 select-none">
       <div>
-
-       <h2 className="text-[10vw] leading-none font-bold mt-2 text-white/20">
-            {currentTime.toLocaleTimeString()}
-          </h2>
-          <p className="mt-4 text-white text-end">
-            {currentTime.toLocaleDateString()}
-          </p>
+        <h2 className="text-[10vw] leading-none font-bold mt-2 text-white/20">
+          {currentTime.toLocaleTimeString()}
+        </h2>
+        <p className="mt-4 text-white text-end">
+          {currentTime.toLocaleDateString()}
+        </p>
       </div>
       <div className="w-full max-w-2xl rounded-2xl bg-card shadow-xl p-6 border border-border">
         {/* Header */}
         <div className="text-center mb-8">
 
-          
 
-         
+
+
         </div>
 
         {/* Username */}
@@ -54,8 +63,8 @@ function RouteComponent() {
           <input
             type="text"
             placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             className="w-full   bg-foreground p-3 outline-none rounded-full"
           />
         </div>

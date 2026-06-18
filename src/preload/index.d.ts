@@ -7,6 +7,16 @@ interface Api {
   getPendingSessions: () => Promise<TSession[]>
   removeActivityListeners: () => void
   getAllSession: () => Promise<{ sessions: TSession[] }>
+  getSystemInfo: () => Promise<{ hostname: string, os: string, systemUsername: string, timezone: string }>
+  loginUser: (payload: {
+    username: string,
+  }) => Promise<void>
+  breakUser: (payload: {
+    username: string,
+  }) => Promise<void>
+  logoutUser: (payload: {
+    username: string,
+  }) => Promise<void>
 }
 
 declare global {
