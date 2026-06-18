@@ -195,6 +195,10 @@ function RouteComponent() {
 
           <button
             onClick={() => {
+              if (getWorkingStatus() === 'logged_out') {
+                window.api.alert({ title: "Already Logged Out", message: "You are already logged out", type: "info" })
+                return
+              }
               if (getWorkingStatus() == 'break') {
                 console.log("clling resume")
                 handleAction('RESUME')
