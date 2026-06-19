@@ -1,7 +1,6 @@
 import { ipcMain } from 'electron'
 import os from 'os'
 import { API_ENDPOINT } from '../constants'
-import type Store from 'electron-store';
 import { AppState, UserStoreType } from '../types';
 
 const HOSTNAME = os.hostname()
@@ -31,23 +30,20 @@ export function UserIpc({ store, appState }: { store: UserStoreType, appState: A
 
 
             const data = await response.json()
+            console.log('data', data)
             if (!store) {
-                return {
-                    data: data,
-                    success: true,
-                    message: "User logged in"
-                }
+                return data
             }
             store.set('userInfo', {
-                userId: data.userId,
-                userName: data.username,
-                attendanceId: data.attendanceId,
+                userId: data.data.userId,
+                userName: data.data.username,
+                attendanceId: data.data.attendanceId,
             })
             appState.trackingEnabled = true
-            appState.currentUserId = data.userId
-            appState.attendanceId = data.attendanceId
+            appState.currentUserId = data.data.userId
+            appState.attendanceId = data.data.attendanceId
             return {
-                data: data,
+                data: data.data,
                 success: true,
                 message: "User logged in"
             }
@@ -101,14 +97,14 @@ export function UserIpc({ store, appState }: { store: UserStoreType, appState: A
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
-            const data  = await response.json()
+            const data = await response.json()
             appState.trackingEnabled = true
             return data
         } catch (error) {
             console.error('Error  in resuming user:', error)
             appState.trackingEnabled = false
             return {
-                data : null,
+                data: null,
                 success: false,
                 message: `Error - ${error}`
             }

@@ -46,23 +46,23 @@ function RouteComponent() {
       }
 
       const resp = await window.api.loginUser({ username: getUserDetail()?.name || userName })
-      console.log(resp)
       if (!resp.success || resp.data === null) {
         await window.api.alert({ title: "Login Failed", message: "You are not authorized to login", type: "error" })
         return
       }
-      if (resp?.data.existing) {
+      if (resp.data.existing) {
+        localStorage.setItem("userId", resp.data.userId)
+        localStorage.setItem("userName", resp.data.userName)
+        localStorage.setItem("attendanceId", resp.data.attendanceId)
         await window.api.alert({ title: "Already Logged in", message: `Your are Already logged in at ${new Date(resp.data.loginTime).toLocaleString()}`, type: "info" })
         return
       }
       if (resp?.data?.userId) {
         localStorage.setItem("userId", resp.data.userId)
-        localStorage.setItem("userName", resp.data.username)
+        localStorage.setItem("userName", resp.data.userName)
         localStorage.setItem("attendanceId", resp.data.attendanceId)
         setWorkingStatus('working')
         toast.success("Logged in successfully")
-      } else {
-        await window.api.alert({ title: "Login Failed", message: "You are not authorized to login", type: "error" })
       }
     }
     if (action === 'BREAK') {

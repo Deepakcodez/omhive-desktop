@@ -13,7 +13,7 @@ interface Api {
   }) => Promise<{
     data: {
       userId: string,
-      username: string,
+      userName: string,
       attendanceId: string,
       existing: boolean,
       loginTime: Date
