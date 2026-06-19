@@ -45,14 +45,9 @@ interface CustomTooltipProps {
   label?: string
 }
 
-
-
 export const Route = createFileRoute('/admin/')({
-  component: RouteComponent,
+  component: RouteComponent
 })
-
-
-
 
 // Custom tooltip for stacked BarChart
 const CustomTooltip = ({
@@ -124,7 +119,7 @@ const CustomPieTooltip = ({ active, payload }: CustomPieTooltipProps): React.JSX
   return null
 }
 
-function RouteComponent(){
+function RouteComponent() {
   const [idleTime, setIdleTime] = useState<number>(0)
   const [sessions, setSessions] = useState<TSession[]>([])
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
@@ -364,14 +359,12 @@ function RouteComponent(){
   return (
     <div className="min-h-screen bg-black text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none">
       {/* Dynamic Background Glows */}
-   
+
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Top Header */}
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4  pb-6">
           <div className="space-y-1">
-            <h1 className="text-3xl tracking-tight">
-              Omhive Activity Center
-            </h1>
+            <h1 className="text-3xl tracking-tight">Omhive Activity Center</h1>
             <p className="text-slate-400 text-sm">
               Visualizing work sessions, app usage, and desktop idle state.
             </p>
@@ -757,4 +750,3 @@ function RouteComponent(){
     </div>
   )
 }
-

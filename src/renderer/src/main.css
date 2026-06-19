@@ -37,7 +37,6 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-
 @theme inline {
   --font-sans: 'Inter Variable', sans-serif;
   --color-background: var(--background);
@@ -90,13 +89,12 @@ body,
   background-color: var(--background);
 }
 
-
 .hide-scroll::-webkit-scrollbar {
   display: none !important;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .hide-scroll {
-  -ms-overflow-style: none !important;  /* IE and Edge */
-  scrollbar-width: none !important;  /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
 }

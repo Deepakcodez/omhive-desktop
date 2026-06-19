@@ -5,12 +5,17 @@ import icon from '../../resources/icon.png?asset'
 import { activeWindow } from 'get-windows'
 import os from 'os'
 import type Store from 'electron-store'
-import { API_ENDPOINT, IDLE_THRESHOLD_SEC, MIN_SESSION_DURATION_SEC, POLL_INTERVAL_MS, SYNC_LOCAL_INTERVAL_MS, SYNC_REMOTE_INTERVAL_MS } from './constants'
+import {
+  API_ENDPOINT,
+  IDLE_THRESHOLD_SEC,
+  MIN_SESSION_DURATION_SEC,
+  POLL_INTERVAL_MS,
+  SYNC_LOCAL_INTERVAL_MS,
+  SYNC_REMOTE_INTERVAL_MS
+} from './constants'
 import type { TSession, UserInfoType } from './types'
 import { IPC_Handlers } from './ipc'
 import { isLoggedIn, syncToServer } from './utils'
-
-
 
 // ── System identity (resolved once at startup) ─────────────────────────────
 const HOSTNAME = os.hostname()
@@ -24,9 +29,8 @@ let store: Store<{ sessions: TSession[] }> | null = null
 const appState = {
   trackingEnabled: false,
   currentUserId: '',
-  attendanceId: '',
+  attendanceId: ''
 }
-
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function closeCurrentSession(): TSession | null {
@@ -39,9 +43,6 @@ function closeCurrentSession(): TSession | null {
 function pushToRenderer(session: TSession): void {
   mainWindow?.webContents.send('activity:update', session)
 }
-
-
-
 
 // ── Window ───────────────────────────────────────────────────────────────────
 function createWindow(): void {
@@ -85,7 +86,7 @@ app.whenReady().then(async () => {
     defaults: {
       userId: '',
       userName: '',
-      attendanceId: '',
+      attendanceId: ''
     }
   })
 
@@ -98,13 +99,12 @@ app.whenReady().then(async () => {
       if (session?.loggedIn) {
         appState.trackingEnabled = true
         appState.currentUserId = userInfo.userId
-        appState.attendanceId = session.attendanceId || ""
+        appState.attendanceId = session.attendanceId || ''
       }
     } catch (err) {
       console.error(err)
     }
   }
-
 
   electronApp.setAppUserModelId('com.omhive')
 
@@ -123,7 +123,6 @@ app.whenReady().then(async () => {
   createWindow()
   // ── Poll: detect active window every second ─────────────────────────────
   setInterval(async () => {
-
     if (!appState.trackingEnabled) return
 
     const idleTime = powerMonitor.getSystemIdleTime()
@@ -190,10 +189,10 @@ app.whenReady().then(async () => {
       hostname: HOSTNAME,
       systemUsername: USERNAME,
       userId: appState.currentUserId,
-      attendanceId: appState.attendanceId,
+      attendanceId: appState.attendanceId
     }
 
-    console.log("step-1 pendingstatus", pendingSessions)
+    console.log('step-1 pendingstatus', pendingSessions)
   }, POLL_INTERVAL_MS)
 
   // store activity locally after 1 minutes
@@ -207,24 +206,23 @@ app.whenReady().then(async () => {
       pendingSessions = []
       console.log('Saved locally')
     }
-    console.log("step-2 pendingstatus", pendingSessions)
+    console.log('step-2 pendingstatus', pendingSessions)
   }, SYNC_LOCAL_INTERVAL_MS)
 
   // ── Sync: batch-send sessions to server every 5 min ──────────────────────
   setInterval(async () => {
     if (!appState.trackingEnabled) return
-    const existing = store?.get('sessions', []) || [];
-    console.log("existing", existing);
+    const existing = store?.get('sessions', []) || []
+    console.log('existing', existing)
     if (existing.length === 0) return
-    console.log("step-3 pendingstatus", existing)
+    console.log('step-3 pendingstatus', existing)
     try {
       await syncToServer(existing)
       store?.set('sessions', [])
     } catch (error) {
-      console.log("sending to server failed", error)
-
+      console.log('sending to server failed', error)
     }
-    console.log("sending to server end")
+    console.log('sending to server end')
   }, SYNC_REMOTE_INTERVAL_MS)
 
   app.on('activate', () => {
@@ -235,7 +233,7 @@ app.whenReady().then(async () => {
 // Flush any open session before quitting
 app.on('before-quit', () => {
   const closed = closeCurrentSession()
-  if (closed) syncToServer([closed],)
+  if (closed) syncToServer([closed])
 })
 
 app.on('window-all-closed', () => {

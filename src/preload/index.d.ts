@@ -7,47 +7,45 @@ interface Api {
   getPendingSessions: () => Promise<TSession[]>
   removeActivityListeners: () => void
   getAllSession: () => Promise<{ sessions: TSession[] }>
-  getSystemInfo: () => Promise<{ hostname: string, os: string, systemUsername: string, timezone: string }>
-  loginUser: (payload: {
-    username: string,
-  }) => Promise<{
+  getSystemInfo: () => Promise<{
+    hostname: string
+    os: string
+    systemUsername: string
+    timezone: string
+  }>
+  loginUser: (payload: { username: string }) => Promise<{
     data: {
-      userId: string,
-      userName: string,
-      attendanceId: string,
-      existing: boolean,
+      userId: string
+      userName: string
+      attendanceId: string
+      existing: boolean
       loginTime: Date
     } | null
     success: boolean
     message: string
   }>
-  breakUser: (payload: {
-    attendanceId: string,
-  }) => Promise<{
+  breakUser: (payload: { attendanceId: string }) => Promise<{
     data: {
-      breakId: string;
-      startTime: Date;
+      breakId: string
+      startTime: Date
     } | null
     success: boolean
     message: string
   }>
   resumeUser: (payload: { attendanceId: string }) => Promise<{
     data: {
-      durationSeconds: number;
-      resumedAt: Date;
+      durationSeconds: number
+      resumedAt: Date
     }
     success: boolean
     message: string
   }>
-  logoutUser: (payload: {
-    attendanceId: string,
-  }) => Promise<{
-    alreadyLoggedOut: false;
-    logoutTime: Date;
-    totalWorkSeconds: number;
-    totalBreakSeconds: number;
+  logoutUser: (payload: { attendanceId: string }) => Promise<{
+    alreadyLoggedOut: false
+    logoutTime: Date
+    totalWorkSeconds: number
+    totalBreakSeconds: number
   }>
-
 
   alert: (payload: {
     title: string
