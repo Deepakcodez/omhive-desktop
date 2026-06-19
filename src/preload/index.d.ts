@@ -11,22 +11,34 @@ interface Api {
   loginUser: (payload: {
     username: string,
   }) => Promise<{
-    userId: string,
-    username: string,
-    attendanceId: string,
-    existing: boolean,
-    loginTime: Date
-  } | null>
+    data: {
+      userId: string,
+      username: string,
+      attendanceId: string,
+      existing: boolean,
+      loginTime: Date
+    } | null
+    success: boolean
+    message: string
+  }>
   breakUser: (payload: {
     attendanceId: string,
   }) => Promise<{
-    startTime: Date;
-    attendanceId: string;
-    id: string;
-    endTime: Date | null;
-    durationSeconds: number;
+    data: {
+      breakId: string;
+      startTime: Date;
+    } | null
+    success: boolean
+    message: string
   }>
-  resumeUser: (payload: { attendanceId: string }) => Promise<{ durationSeconds: number }>
+  resumeUser: (payload: { attendanceId: string }) => Promise<{
+    data: {
+      durationSeconds: number;
+      resumedAt: Date;
+    }
+    success: boolean
+    message: string
+  }>
   logoutUser: (payload: {
     attendanceId: string,
   }) => Promise<{

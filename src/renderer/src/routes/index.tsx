@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -40,24 +40,25 @@ function RouteComponent() {
   const handleAction = async (action: string) => {
     if (action === 'LOGIN') {
 
-      if (!userName.trim()) {
+      if (!getUserDetail()?.name.trim() && !userName.trim()) {
         await window.api.alert({ title: "Username Required", message: "Please enter your username", type: "error" })
         return
       }
 
-      const resp = await window.api.loginUser({ username: userName })
-      if (resp === null) {
+      const resp = await window.api.loginUser({ username: getUserDetail()?.name || userName })
+      console.log(resp)
+      if (!resp.success || resp.data === null) {
         await window.api.alert({ title: "Login Failed", message: "You are not authorized to login", type: "error" })
         return
       }
-      if (resp?.existing) {
-        await window.api.alert({ title: "Already Logged in", message: `Your are Already logged in at ${new Date(resp.loginTime).toLocaleString()}`, type: "info" })
+      if (resp?.data.existing) {
+        await window.api.alert({ title: "Already Logged in", message: `Your are Already logged in at ${new Date(resp.data.loginTime).toLocaleString()}`, type: "info" })
         return
       }
-      if (resp?.userId) {
-        localStorage.setItem("userId", resp.userId)
-        localStorage.setItem("userName", resp.username)
-        localStorage.setItem("attendanceId", resp.attendanceId)
+      if (resp?.data?.userId) {
+        localStorage.setItem("userId", resp.data.userId)
+        localStorage.setItem("userName", resp.data.username)
+        localStorage.setItem("attendanceId", resp.data.attendanceId)
         setWorkingStatus('working')
         toast.success("Logged in successfully")
       } else {
@@ -71,18 +72,13 @@ function RouteComponent() {
         return
       }
       const resp = await window.api.breakUser({ attendanceId: attandanceId })
-      if (resp === null) {
-        await window.api.alert({ title: "Break Failed", message: "You are not authorized to take  break", type: "error" })
+      if (!resp.success || resp.data === null) {
+        await window.api.alert({ title: "Break Failed", message: resp.message || "You are not authorized to take  break", type: "error" })
         return
       }
-      if (resp?.id) {
-        localStorage.setItem("breakId", resp.id)
-        setWorkingStatus('break')
-        toast.success("Break started successfully")
-      } else {
-        await window.api.alert({ title: "Break Failed", message: "You are not authorized to take  break", type: "error" })
-      }
-
+      localStorage.setItem("breakId", resp.data?.breakId)
+      setWorkingStatus('break')
+      toast.success("Break started successfully")
     }
 
     if (action === 'RESUME') {
@@ -92,16 +88,16 @@ function RouteComponent() {
         return
       }
       const resp = await window.api.resumeUser({ attendanceId: attandanceId })
-      if (resp === null) {
-        await window.api.alert({ title: "Resume Failed", message: "You are not authorized to resume", type: "error" })
+      if (!resp.success || resp.data === null) {
+        await window.api.alert({ title: "Resume Failed", message: resp.message || "You are not authorized to resume", type: "error" })
         return
       }
-      if (resp?.durationSeconds) {
+      if (resp?.data?.durationSeconds) {
         localStorage.removeItem("breakId")
         setWorkingStatus('working')
         toast.success("Break resumed successfully")
       } else {
-        await window.api.alert({ title: "Resume Failed", message: "You are not authorized to resume", type: "error" })
+        await window.api.alert({ title: "Resume Failed", message: resp.message || "You are not authorized to resume", type: "error" })
       }
 
     }
@@ -225,6 +221,9 @@ function RouteComponent() {
         <div className="mt-6 text-center text-sm text-gray-500">
           Status: {getWorkingStatus()?.toUpperCase() || "Not Logged In Yet"}
         </div>
+        <Link to='/admin'>
+          go to dashboard
+        </Link>
       </div>
     </div >
   )

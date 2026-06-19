@@ -1,11 +1,17 @@
 import { ipcMain } from 'electron'
 import os from 'os'
 import { API_ENDPOINT } from '../constants'
+import type Store from 'electron-store';
+import { AppState, UserStoreType } from '../types';
 
 const HOSTNAME = os.hostname()
 const USERNAME = os.userInfo().username
 
-export function loginUserIpc() {
+
+
+
+export function UserIpc({ store, appState }: { store: UserStoreType, appState: AppState }) {
+
     ipcMain.handle('user:login', async (_, payload: { username: string }) => {
         const bodyData = {
             userName: payload.username,
@@ -14,7 +20,6 @@ export function loginUserIpc() {
             systemUsername: USERNAME,
             startTime: new Date().toISOString(),
         }
-        console.log('loginUserIpc : ', bodyData)
         try {
             const response = await fetch(API_ENDPOINT + '/user/login', {
                 method: 'POST',
@@ -24,14 +29,36 @@ export function loginUserIpc() {
                 body: JSON.stringify(bodyData),
             })
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
+
+            const data = await response.json()
+            if (!store) {
+                return {
+                    data: data,
+                    success: true,
+                    message: "User logged in"
+                }
             }
-            const { data } = await response.json()
-            return data
+            store.set('userInfo', {
+                userId: data.userId,
+                userName: data.username,
+                attendanceId: data.attendanceId,
+            })
+            appState.trackingEnabled = true
+            appState.currentUserId = data.userId
+            appState.attendanceId = data.attendanceId
+            return {
+                data: data,
+                success: true,
+                message: "User logged in"
+            }
         } catch (error) {
             console.error('Error logging in user:', error)
-            return null
+            appState.trackingEnabled = false
+            return {
+                data: null,
+                success: false,
+                message: `Error - ${error}`
+            }
         }
     })
     ipcMain.handle('user:break', async (_, payload: { attendanceId: string }) => {
@@ -44,15 +71,20 @@ export function loginUserIpc() {
                 },
                 body: JSON.stringify(payload),
             })
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
+            const data = await response.json()
+            console.log(data)
+            if (data.success) {
+                appState.trackingEnabled = false
             }
-            const { data } = await response.json()
             return data
         } catch (error) {
             console.error('Error in taking break:', error)
-            return null
+            appState.trackingEnabled = false
+            return {
+                data: null,
+                success: false,
+                message: `Error - ${error}`
+            }
         }
     })
     ipcMain.handle('user:resume', async (_, payload: { attendanceId: string }) => {
@@ -69,17 +101,46 @@ export function loginUserIpc() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
-            const { data } = await response.json()
+            const data  = await response.json()
+            appState.trackingEnabled = true
             return data
         } catch (error) {
             console.error('Error  in resuming user:', error)
-            return null
+            appState.trackingEnabled = false
+            return {
+                data : null,
+                success: false,
+                message: `Error - ${error}`
+            }
         }
     })
     ipcMain.handle('user:logout', async (_, payload: { attendanceId: string }) => {
 
         try {
             const response = await fetch(API_ENDPOINT + '/user/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const { data } = await response.json()
+            appState.trackingEnabled = false
+            return data
+        } catch (error) {
+            console.error('Error  in resuming user:', error)
+            appState.trackingEnabled = false
+            return null
+        }
+    })
+    ipcMain.handle('user:set-info', async (_, payload: { userId: string, name: string }) => {
+
+        try {
+            const response = await fetch(API_ENDPOINT + '/user/set-info', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
