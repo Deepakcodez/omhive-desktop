@@ -158,7 +158,30 @@ export function UserIpc({ store, appState }: { store: UserStoreType; appState: A
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      const { data } = await response.json()
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error  in resuming user:', error)
+      return {
+        data: null,
+        success: false,
+        message: `Error - ${error}`
+      }
+    }
+  })
+  ipcMain.handle('user:with-login-logout', async () => {
+    try {
+      const response = await fetch(API_ENDPOINT + '/user/with-login-logout', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
       return data
     } catch (error) {
       console.error('Error  in resuming user:', error)

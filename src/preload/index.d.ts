@@ -1,5 +1,38 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 
+
+export type Attendance = {
+  id: string
+  date: string
+  loginTime: string
+  logoutTime: string | null
+  expectedWorkSeconds: number
+  totalWorkSeconds: number
+  totalBreakSeconds: number
+  status: 'working' | 'break' | 'logged_out'
+  hostname: string
+  systemUsername: string
+  os: string
+}
+
+export type UserWithAttendance = {
+  id: string
+  userName: string
+  fullName: string
+  phone: string
+  attendance: Attendance[]
+}
+
+export type UsersWithLoginLogout = {
+  data: UserWithAttendance[]
+  success: boolean
+  message: string
+}
+
+
+
+
+
 interface Api {
   onIdleTime: (callback: (idleTime: number) => void) => void
   removeIdleTimeListener: () => void
@@ -24,6 +57,9 @@ interface Api {
     success: boolean
     message: string
   }>
+  listUserWithLoginLogout: () => Promise<
+    UsersWithLoginLogout
+  >
   loginUser: (payload: { username: string }) => Promise<{
     data: {
       userId: string

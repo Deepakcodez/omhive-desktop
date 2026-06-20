@@ -21,6 +21,7 @@ const api = {
   getAllSession: () => ipcRenderer.invoke('activity:get-all'),
   getSystemInfo: () => ipcRenderer.invoke('user:get-info'),
   listUser: () => ipcRenderer.invoke('user:list'),
+  listUserWithLoginLogout: () => ipcRenderer.invoke('user:with-login-logout'),
   loginUser: (payload: {
     username: string
     hostname: string

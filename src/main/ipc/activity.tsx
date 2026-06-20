@@ -7,12 +7,16 @@ export function ActivityIpc() {
         console.log(payload.date)
         try {
             const limit = payload.limit || 100
-            const userId = payload.userId
-            const attendanceId = payload.attendanceId
-            const date = new Date(payload.date)
-                .toISOString()
-                .split('T')[0]
-            const response = await fetch(`${API_ENDPOINT}/activity/date/${date}?userId=${userId}&attendanceId=${attendanceId}&limit=${limit}`, {
+            const url = new URL(`${API_ENDPOINT}/activity/date/${payload.date}`)
+            if (payload.userId) {
+                url.searchParams.append('userId', payload.userId)
+            }
+            if (payload.attendanceId) {
+                url.searchParams.append('attendanceId', payload.attendanceId)
+            }
+            url.searchParams.append('limit', String(limit))
+
+            const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
