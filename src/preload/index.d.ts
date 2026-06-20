@@ -13,6 +13,17 @@ interface Api {
     systemUsername: string
     timezone: string
   }>
+  listUser: () => Promise<{
+    data: {
+      id: string;
+      userName: string;
+      fullName: string;
+      phone: string;
+      createdAt: Date;
+    }[] | null
+    success: boolean
+    message: string
+  }>
   loginUser: (payload: { username: string }) => Promise<{
     data: {
       userId: string
@@ -46,6 +57,17 @@ interface Api {
     totalWorkSeconds: number
     totalBreakSeconds: number
   }>
+
+  getUserActivity: (payload: {
+    userId: string
+    date: string
+    attendanceId: string
+    limit: number
+  }) => Promise<{
+    data: TSession[] | null
+    success: boolean
+    message: string
+  }>;
 
   alert: (payload: {
     title: string

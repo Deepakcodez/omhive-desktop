@@ -20,6 +20,7 @@ const api = {
   },
   getAllSession: () => ipcRenderer.invoke('activity:get-all'),
   getSystemInfo: () => ipcRenderer.invoke('user:get-info'),
+  listUser: () => ipcRenderer.invoke('user:list'),
   loginUser: (payload: {
     username: string
     hostname: string
@@ -30,6 +31,9 @@ const api = {
   breakUser: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:break', payload),
   resumeUser: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:resume', payload),
   logoutUser: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:logout', payload),
+
+  getUserActivity: (payload: { userId: string; attendanceId: string; date: string; limit: number }) =>
+    ipcRenderer.invoke('activity:track', payload),
 
   alert: (payload: { title: string; message: string; type?: 'info' | 'warning' | 'error' }) =>
     ipcRenderer.invoke('system:alert', payload)

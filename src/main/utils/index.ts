@@ -3,7 +3,7 @@ import { TSession } from '../types'
 
 export async function syncToServer(sessions: TSession[]): Promise<void> {
   try {
-    const res = await fetch('http://localhost:5001', {
+    const res = await fetch(`${API_ENDPOINT}/activity`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sessions)
@@ -21,17 +21,17 @@ export const isLoggedIn = async (
   userId: string
 ): Promise<
   | {
-      loggedIn: boolean
-      attendanceId: string
-      loginTime: Date
-      status: 'working' | 'break' | 'logged_out'
-    }
+    loggedIn: boolean
+    attendanceId: string
+    loginTime: Date
+    status: 'working' | 'break' | 'logged_out'
+  }
   | {
-      loggedIn: boolean
-      attendanceId: null
-      loginTime: null
-      status: null
-    }
+    loggedIn: boolean
+    attendanceId: null
+    loginTime: null
+    status: null
+  }
 > => {
   try {
     const date = new Date().toISOString().split('T')[0]

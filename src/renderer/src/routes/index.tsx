@@ -214,7 +214,7 @@ function RouteComponent() {
             onClick={() => handleAction('LOGIN')}
             className="rounded-lg bg-green-600 text-white py-3 font-semibold hover:opacity-90"
           >
-            Login
+            {getWorkingStatus() === 'working' ? 'Working' : 'Login'}
           </button>
 
           <button

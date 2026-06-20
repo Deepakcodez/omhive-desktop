@@ -55,6 +55,13 @@ const CustomTooltip = ({
   payload,
   label
 }: CustomTooltipProps): React.JSX.Element | null => {
+
+
+
+
+
+
+
   if (active && payload && payload.length) {
     // Sort items by value descending (hide zero values)
     const activeItems = [...payload]
@@ -125,6 +132,20 @@ function RouteComponent() {
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [now, setNow] = useState<number>(() => Date.now())
+
+  const getActivity = async () => {
+    const activity = await window.api.getUserActivity({ userId: "86dc9045-0562-4540-91e6-433c233db73a", date: new Date().toISOString(), attendanceId: "588d98d7-85dd-45ed-ae0f-4688f15f6db6", limit: 100 })
+    console.log("resp-->", activity)
+  }
+  const getAllUsers = async () => {
+    const users = await window.api.listUser()
+    console.log("users-->", users)
+  }
+
+  useEffect(() => {
+    getActivity()
+    getAllUsers()
+  }, [])
 
   // Keep rendering state pure by reading time from state updated via effect
   useEffect((): (() => void) => {
