@@ -293,8 +293,8 @@ function RouteComponent() {
       }
     }
 
-    const firstTime = Math.min(...filteredSessions.map((s) => s.startTime))
-    const lastTime = Math.max(...filteredSessions.map((s) => s.endTime))
+    const firstTime = Math.min(...filteredSessions.map((s) => new Date(s.startTime).getTime()))
+    const lastTime = Math.max(...filteredSessions.map((s) => new Date(s.endTime).getTime()))
     const endAnchor = isSelectedToday ? now : lastTime
     const elapsedSec = Math.max(0, (endAnchor - firstTime) / 1000)
 
@@ -346,8 +346,8 @@ function RouteComponent() {
   const { chartBins, uniqueApps } = useMemo((): { chartBins: ChartBin[]; uniqueApps: string[] } => {
     if (filteredSessions.length === 0) return { chartBins: [], uniqueApps: [] }
 
-    const firstTime = Math.min(...filteredSessions.map((s) => s.startTime))
-    const lastTime = Math.max(...filteredSessions.map((s) => s.endTime))
+    const firstTime = Math.min(...filteredSessions.map((s) => new Date(s.startTime).getTime()))
+    const lastTime = Math.max(...filteredSessions.map((s) => new Date(s.endTime).getTime()))
 
     const startHour = new Date(firstTime).getHours()
     const endHour = isSelectedToday ? new Date(now).getHours() : new Date(lastTime).getHours()
@@ -371,8 +371,8 @@ function RouteComponent() {
       let totalActiveMins = 0
 
       filteredSessions.forEach((s) => {
-        const overlapStart = Math.max(s.startTime, binStart)
-        const overlapEnd = Math.min(s.endTime, binEnd)
+        const overlapStart = Math.max(new Date(s.startTime).getTime(), binStart)
+        const overlapEnd = Math.min(new Date(s.endTime).getTime(), binEnd)
         if (overlapStart < overlapEnd) {
           const overlapMins = (overlapEnd - overlapStart) / (60 * 1000)
           activeDurations[s.software] = (activeDurations[s.software] || 0) + overlapMins
@@ -645,7 +645,16 @@ function RouteComponent() {
           </div>
         </section>
 
-        <UserListwithDetails />
+        <UserListwithDetails
+          onInspectUser={(userId, date) => {
+            const userObj = users.find((u) => u.id === userId) || null
+            setInspectedUser(userObj)
+            setInspectedDate(date)
+            if (userObj) {
+              loadInspectedSessions(userId, date)
+            }
+          }}
+        />
 
         {/* Charts Section */}
         {loadingInspection ? (
@@ -691,48 +700,50 @@ function RouteComponent() {
                 </span>
               </div>
 
-              <div className="h-80 w-full shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartBins} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-                    <XAxis
-                      dataKey="time"
-                      stroke="#64748B"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#64748B"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      domain={[0, 60]}
-                      ticks={[0, 15, 30, 45, 60]}
-                    />
-                    <Tooltip
-                      content={<CustomTooltip />}
-                      cursor={{ fill: '#1E293B', opacity: 0.3 }}
-                    />
-                    <Legend
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: 11, paddingTop: 15 }}
-                    />
-                    {/* Unique Apps stacked */}
-                    {uniqueApps.map((app, idx) => (
-                      <Bar
-                        key={app}
-                        dataKey={app}
-                        stackId="a"
-                        fill={getAppColor(app, idx)}
-                        radius={[0, 0, 0, 0]}
+              <div className="w-full overflow-x-auto scrollbar-thin pr-1 pb-1">
+                <div className="h-80 min-w-[800px] w-full shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartBins} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                      <XAxis
+                        dataKey="time"
+                        stroke="#64748B"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                    ))}
-                    {/* Idle stacked */}
-                    <Bar dataKey="Idle" stackId="a" fill="#334155" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                      <YAxis
+                        stroke="#64748B"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        domain={[0, 60]}
+                        ticks={[0, 15, 30, 45, 60]}
+                      />
+                      <Tooltip
+                        content={<CustomTooltip />}
+                        cursor={{ fill: '#1E293B', opacity: 0.3 }}
+                      />
+                      <Legend
+                        iconType="circle"
+                        iconSize={8}
+                        wrapperStyle={{ fontSize: 11, paddingTop: 15 }}
+                      />
+                      {/* Unique Apps stacked */}
+                      {uniqueApps.map((app, idx) => (
+                        <Bar
+                          key={app}
+                          dataKey={app}
+                          stackId="a"
+                          fill={getAppColor(app, idx)}
+                          radius={[0, 0, 0, 0]}
+                        />
+                      ))}
+                      {/* Idle stacked */}
+                      <Bar dataKey="Idle" stackId="a" fill="#334155" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
@@ -799,36 +810,37 @@ function RouteComponent() {
         )}
 
         {/* Detailed Session Logs */}
-        <section className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-200">Chronological Activity Log</h3>
-              <p className="text-slate-400 text-xs mt-0.5">
-                Detailed window transition events for the day.
-              </p>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Chronological Activity Log</h3>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Detailed window transition events for the day.
+            </p>
+          </div>
 
-            {/* Search Input */}
-            <div className="relative max-w-sm w-full">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search app or window title..."
-                className="w-full bg-black border border-border text-slate-200 text-sm px-4 py-2 pl-10 rounded-full focus:outline-none  placeholder-slate-500 transition"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
+          {/* Search Input */}
+          <div className="relative max-w-sm w-full">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search app or window title..."
+              className="w-full bg-card border border-border text-foreground text-sm px-4 py-2 pl-10 rounded-full focus:outline-none  placeholder-foreground/50 transition"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-foreground">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             </div>
           </div>
+        </div>
+        <section className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-4">
+
 
           <div className="border border-border rounded-xl overflow-hidden bg-card">
             <div className="overflow-x-auto">
@@ -894,15 +906,7 @@ function RouteComponent() {
           </div>
         </section>
       </div>
-      <InspectionSidebar
-        isOpen={isInspectorOpen}
-        onClose={() => setIsInspectorOpen(false)}
-        onApply={handleApplyInspection}
-        users={users}
-        loadingUsers={loadingUsers}
-        initialUserId={inspectedUser?.id}
-        initialDate={inspectedDate}
-      />
+
     </div>
   )
 }

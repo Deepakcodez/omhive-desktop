@@ -91,7 +91,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
   }, [selectedDate])
 
   return (
-    <div className="flex flex-col space-y-2 w-full bg-slate-950 border border-slate-900 rounded-2xl p-4 shadow-xl">
+    <div className="flex flex-col space-y-2 w-full bg-card rounded-2xl p-4 shadow-xl">
       <div className="flex items-center justify-between px-1 pb-2">
         <h4 className="text-sm font-bold text-slate-100">
           {MONTH_NAMES[currentMonth]} {currentYear}
@@ -100,7 +100,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 hover:bg-slate-900 border border-slate-900 hover:border-slate-800 text-slate-400 hover:text-slate-200 rounded-lg transition"
+            className="p-1.5 hover:bg-primary/20  text-slate-400 hover:text-slate-200 rounded-full border border-border transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
@@ -109,7 +109,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
           <button
             type="button"
             onClick={handleNextMonth}
-            className="p-1.5 hover:bg-slate-900 border border-slate-900 hover:border-slate-800 text-slate-400 hover:text-slate-200 rounded-lg transition"
+            className="p-1.5 hover:bg-primary/20  text-slate-400 hover:text-slate-200 rounded-full border border-border transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
@@ -138,9 +138,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
               onClick={() => onSelectDate(cell.dateString)}
               className={`
                 aspect-square flex items-center justify-center rounded-lg text-xs font-semibold transition relative
-                ${isSelected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : ''}
-                ${!isSelected && cell.isCurrentMonth ? 'text-slate-300 hover:bg-slate-900 hover:text-slate-100 cursor-pointer' : ''}
-                ${!isSelected && !cell.isCurrentMonth ? 'text-slate-600 hover:bg-slate-900/50 hover:text-slate-500 cursor-pointer' : ''}
+                ${isSelected ? 'bg-primary text-black shadow-md shadow-indigo-600/20' : ''}
+                ${!isSelected && cell.isCurrentMonth ? 'text-slate-300 hover:bg-primary/20 hover:text-slate-100 cursor-pointer' : ''}
+                ${!isSelected && !cell.isCurrentMonth ? 'text-slate-600 hover:bg-red-500/20 hover:text-slate-500 cursor-pointer' : ''}
               `}
             >
               {cell.day}
