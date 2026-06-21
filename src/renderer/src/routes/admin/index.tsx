@@ -348,19 +348,28 @@ function RouteComponent() {
     const firstTime = Math.min(...filteredSessions.map((s) => new Date(s.startTime).getTime()))
     const lastTime = Math.max(...filteredSessions.map((s) => new Date(s.endTime).getTime()))
 
-    const startHour = new Date(firstTime).getHours()
-    const endHour = isSelectedToday ? new Date(now).getHours() : new Date(lastTime).getHours()
+    // Truncate start and end times to the start of their respective hours
+    const startOfFirstHour = new Date(firstTime)
+    startOfFirstHour.setMinutes(0, 0, 0)
+    const startOfEndHour = new Date(isSelectedToday ? now : lastTime)
+    startOfEndHour.setMinutes(0, 0, 0)
 
     const bins: ChartBin[] = []
     const apps = new Set<string>()
 
-    for (let h = startHour; h <= endHour; h++) {
-      const binStart = new Date(firstTime).setHours(h, 0, 0, 0)
-      const binEnd = new Date(firstTime).setHours(h, 59, 59, 999)
+    let currentHourTime = startOfFirstHour.getTime()
+    const endHourTime = startOfEndHour.getTime()
+
+    // Safety limit to avoid rendering too many columns if times are anomalous
+    let loopCount = 0
+    while (currentHourTime <= endHourTime && loopCount < 48) {
+      loopCount++
+      const binStart = currentHourTime
+      const binEnd = currentHourTime + 60 * 60 * 1000 - 1
 
       // Total minutes available in this bin so far
       let elapsedMs = 60 * 60 * 1000
-      if (isSelectedToday && h === new Date(now).getHours()) {
+      if (isSelectedToday && new Date(now).setMinutes(0, 0, 0) === currentHourTime) {
         elapsedMs = now - binStart
       }
       elapsedMs = Math.max(0, elapsedMs)
@@ -383,6 +392,8 @@ function RouteComponent() {
       const activeClamp = Math.min(elapsedMins, totalActiveMins)
       const idleMins = Math.max(0, elapsedMins - activeClamp)
 
+      const binDate = new Date(currentHourTime)
+      const h = binDate.getHours()
       const ampm = h >= 12 ? 'PM' : 'AM'
       const displayHour = h % 12 === 0 ? 12 : h % 12
       const label = `${displayHour} ${ampm}`
@@ -394,6 +405,8 @@ function RouteComponent() {
           Object.entries(activeDurations).map(([app, mins]) => [app, Math.round(mins * 10) / 10])
         )
       })
+
+      currentHourTime += 60 * 60 * 1000
     }
 
     return { chartBins: bins, uniqueApps: Array.from(apps) }
