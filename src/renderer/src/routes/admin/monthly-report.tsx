@@ -2,13 +2,28 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { User, UserSelector } from "../../components/admin/UserSelector";
 import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Legend,
+    PieChart,
+    Pie,
+    Cell
+} from 'recharts';
+import {
     ArrowLeft,
     Clock,
     Coffee,
     Activity,
     AlertCircle,
     FileText,
-    Percent
+    Percent,
+    Search,
+    X
 } from "lucide-react";
 
 export const Route = createFileRoute('/admin/monthly-report')({
@@ -51,6 +66,7 @@ function RouteComponent() {
     const [report, setReport] = useState<any>(null);
     const [loadingReport, setLoadingReport] = useState(false);
     const [reportError, setReportError] = useState<string | null>(null);
+    const [selectedActivityDate, setSelectedActivityDate] = useState<string | null>(null);
 
     // Fetch users on mount
     useEffect(() => {
@@ -142,6 +158,25 @@ function RouteComponent() {
         return [curYear - 2, curYear - 1, curYear, curYear + 1];
     }, []);
 
+    const chartData = useMemo(() => {
+        if (!report || !report.attendance) return [];
+        return report.attendance
+            .slice()
+            .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map((att: any) => {
+                const dateObj = new Date(att.date);
+                const dayLabel = isNaN(dateObj.getTime())
+                    ? att.date
+                    : dateObj.toLocaleDateString([], { day: 'numeric', month: 'short' });
+
+                return {
+                    name: dayLabel,
+                    "Work Hours": att.isPresent ? Math.round((att.totalWorkSeconds / 3600) * 10) / 10 : 0,
+                    "Break Hours": att.isPresent ? Math.round((att.totalBreakSeconds / 3600) * 10) / 10 : 0,
+                };
+            });
+    }, [report]);
+
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200 select-none pb-12">
@@ -151,7 +186,7 @@ function RouteComponent() {
                     <div className="flex items-center space-x-4">
                         <Link
                             to="/admin"
-                            className="p-2.5 bg-card  text-foreground  rounded-full border border-border transition cursor-pointer flex items-center justify-center shrink-0"
+                            className="p-2.5 bg-card  text-foreground  rounded-full border border-border transition cursor-pointer flex items-center justify-center shrink-0  "
                             title="Back to Dashboard"
                         >
                             <ArrowLeft className="w-5 h-5" />
@@ -324,11 +359,61 @@ function RouteComponent() {
                             </div>
                         </section>
 
+                        {/* Visualization Graph */}
+                        {chartData.length > 0 && (
+                            <div className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-4 animate-fade-in">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-200">Monthly Time Distribution</h3>
+                                    <p className="text-slate-400 text-xs mt-0.5">
+                                        Daily comparison of active work hours vs break hours.
+                                    </p>
+                                </div>
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                stroke="#64748B"
+                                                fontSize={10}
+                                                tickLine={false}
+                                                axisLine={false}
+                                            />
+                                            <YAxis
+                                                stroke="#64748B"
+                                                fontSize={10}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                unit="h"
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: '#090D16',
+                                                    borderColor: '#1E293B',
+                                                    borderRadius: '12px',
+                                                    color: '#F8FAFC',
+                                                    fontSize: '11px',
+                                                }}
+                                                cursor={{ fill: '#1E293B', opacity: 0.15 }}
+                                            />
+                                            <Legend
+                                                iconType="circle"
+                                                iconSize={8}
+                                                wrapperStyle={{ fontSize: 11, paddingTop: 10 }}
+                                            />
+                                            <Bar dataKey="Work Hours" stackId="a" fill="#6366f1" radius={[0, 0, 0, 0]} />
+                                            <Bar dataKey="Break Hours" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Table Section */}
                         <div className="space-y-4">
                             <div>
                                 <h2 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
-                                   <span className="pe-2"> {selectedUsername.toUpperCase() || 'User '} </span> <span>Detailed Work Log</span>
+                                    <span className="pe-2"> {selectedUsername.toUpperCase() || 'User '} </span> <span>Detailed Work Log</span>
                                     <span className="bg-indigo-500/10 text-indigo-400 text-[10px] px-2 py-0.5 border border-indigo-500/25 rounded-md">
                                         {MONTHS.find(m => m.value === month)?.label} {year}
                                     </span>
@@ -355,6 +440,7 @@ function RouteComponent() {
                                             <div className="flex-1">Break Time</div>
                                             <div className="flex-[1.5] min-w-0">Device Info</div>
                                             <div className="flex-1 flex justify-end">Status</div>
+                                            <div className="w-24 flex justify-end">Details</div>
                                         </div>
 
                                         {/* Data Rows */}
@@ -421,6 +507,20 @@ function RouteComponent() {
                                                                     {!att.isPresent ? 'absent' : (att.status === 'logged_out' ? 'present' : att.status)}
                                                                 </span>
                                                             </div>
+
+                                                            {/* Column 8: Details Action */}
+                                                            <div className="w-24 flex justify-end shrink-0">
+                                                                {att.isPresent ? (
+                                                                    <button
+                                                                        onClick={() => setSelectedActivityDate(att.date)}
+                                                                        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.03] text-white rounded-lg text-[10px] font-semibold transition duration-150 cursor-pointer"
+                                                                    >
+                                                                        Detail
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="text-slate-600 text-[10px] pr-3">-</span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     )
                                                 })}
@@ -431,6 +531,290 @@ function RouteComponent() {
                         </div>
                     </div>
                 ) : null}
+
+                {selectedActivityDate && (
+                    <ActivityModal
+                        userId={selectedUserId}
+                        userName={selectedUsername}
+                        date={selectedActivityDate}
+                        onClose={() => setSelectedActivityDate(null)}
+                    />
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ActivityModal Component to display daily activity details
+function ActivityModal({
+    userId,
+    userName,
+    date,
+    onClose
+}: {
+    userId: string;
+    userName: string;
+    date: string;
+    onClose: () => void
+}) {
+    const [activities, setActivities] = useState<TSession[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        const fetchActivity = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await window.api.getUserActivity({
+                    userId,
+                    date,
+                    attendanceId: '',
+                    limit: 500
+                });
+                if (response.success && response.data) {
+                    setActivities(response.data);
+                } else {
+                    setError(response.message || "No activity records found.");
+                }
+            } catch (err: any) {
+                console.error("Error loading activity:", err);
+                setError("Failed to fetch activity logs.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchActivity();
+    }, [userId, date]);
+
+    const filteredLog = useMemo(() => {
+        return activities.filter((s) => {
+            const q = searchQuery.toLowerCase();
+            return (s.software || "").toLowerCase().includes(q) || (s.title || "").toLowerCase().includes(q);
+        });
+    }, [activities, searchQuery]);
+
+    // Compute daily app distribution for Pie Chart
+    const pieChartData = useMemo(() => {
+        const totals: Record<string, number> = {};
+        activities.forEach((s) => {
+            totals[s.software] = (totals[s.software] || 0) + s.duration;
+        });
+
+        const colors = [
+            '#6366f1', // Indigo
+            '#10b981', // Emerald
+            '#f59e0b', // Amber
+            '#ec4899', // Pink
+            '#3b82f6', // Blue
+            '#8b5cf6', // Violet
+            '#f43f5e', // Rose
+            '#06b6d4', // Cyan
+            '#84cc16', // Lime
+            '#14b8a6'  // Teal
+        ];
+
+        return Object.entries(totals).map(([name, val], idx) => ({
+            name,
+            value: Math.round((val / 60) * 10) / 10, // seconds to minutes
+            color: colors[idx % colors.length]
+        })).sort((a, b) => b.value - a.value);
+    }, [activities]);
+
+    const formatTime = (timeMs: number) => {
+        try {
+            const d = new Date(timeMs);
+            if (isNaN(d.getTime())) return String(timeMs);
+            return d.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        } catch {
+            return String(timeMs);
+        }
+    };
+
+    const formatDuration = (seconds: number) => {
+        if (seconds <= 0 || isNaN(seconds)) return "0s";
+        const min = Math.floor(seconds / 60);
+        const sec = Math.round(seconds % 60);
+        return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
+    };
+
+    return (
+        <div className=" fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs select-none">
+            {/* Click outside to close */}
+            <div className="absolute inset-0 cursor-default" onClick={onClose} />
+
+            <div className="relative w-full max-w-7xl bg-linear-to-b from-white/15 to-card/50 overflow-hidden border border-border  rounded-2xl flex flex-col max-h-[85vh] shadow-2xl z-10 animate-fade-in backdrop-blur-[100px]">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-border ">
+                    <div>
+                        <h3 className="text-base font-bold text-slate-100 uppercase tracking-wide">
+                            {userName.toUpperCase() || 'USER'} - DAILY ACTIVITY LOG
+                        </h3>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                            Window tracking details for {date}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 bg-card border border-border  shadow-lg shadow-white/10  rounded-full transition cursor-pointer flex items-center justify-center"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Search & Actions bar */}
+                {!loading && !error && activities.length > 0 && (
+                    <div className="px-6 py-4  flex items-center justify-between border-b border-border/40">
+                        <span className="text-xs text-slate-400">
+                            Showing {filteredLog.length} of {activities.length} activity transitions
+                        </span>
+
+                        <div className="relative w-72">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search application or title..."
+                                className="w-full bg-card border border-border text-foreground text-xs px-3.5 py-1.5 pl-8 rounded-full focus:outline-none placeholder-foreground/45 transition"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                                <Search className="h-3.5 w-3.5" />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal Body */}
+                <div className="flex-1 overflow-y-auto p-6 min-h-[300px] custom-scrollbar">
+                    {loading ? (
+                        <div className="h-full min-h-[300px] flex flex-col items-center justify-center space-y-3">
+                            <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-slate-500 text-xs">Loading activity logs...</span>
+                        </div>
+                    ) : error ? (
+                        <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center space-y-2 text-slate-500">
+                            <span className="text-sm font-semibold">{error}</span>
+                        </div>
+                    ) : activities.length === 0 ? (
+                        <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center text-slate-500">
+                            <span className="text-sm font-semibold">No activity logs recorded for this day.</span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1  gap-6">
+                            {/* Left Column: App Breakdown Pie Chart */}
+                            <div className="lg:col-span-1 ">
+                                <div className="bg-card/20 border border-border rounded-xl p-5 flex flex-col justify-between items-center h-full">
+                                    <div className=" w-full text-center pb-2 border-b border-border/40">
+                                        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">App Usage Breakdown</h4>
+                                    </div>
+
+                                    <div className="w-full flex">
+
+                                        <div className="h-44 w-6/12 relative flex items-center justify-center my-4 shrink-0">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={pieChartData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={45}
+                                                        outerRadius={60}
+                                                        paddingAngle={3}
+                                                        dataKey="value"
+                                                    >
+                                                        {pieChartData.map((entry, index) => (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={entry.color}
+                                                                stroke="#090D16"
+                                                                strokeWidth={2}
+                                                            />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            backgroundColor: '#090D16',
+                                                            borderColor: '#1E293B',
+                                                            borderRadius: '12px',
+                                                            color: '#F8FAFC',
+                                                            fontSize: '11px',
+                                                        }}
+                                                    />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+
+                                        {/* List of applications */}
+                                        <div className="h-44 w-6/12 relative flex flex-col  justify-between  my-4 shrink-0  custom-scrollbar">
+                                            {pieChartData.map((entry, index) => (
+                                                <div key={index} className="flex items-center justify-between text-[10px]">
+                                                    <div className="flex items-center space-x-2 min-w-0">
+                                                        <div
+                                                            className="w-2 h-2 rounded-full shrink-0"
+                                                            style={{ backgroundColor: entry.color }}
+                                                        />
+                                                        <span className="text-slate-300 truncate max-w-[120px]" title={entry.name}>{entry.name}</span>
+                                                    </div>
+                                                    <span className="text-slate-400 font-bold shrink-0">{entry.value}m</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {/* Right Column: Detailed activity log list */}
+                            <div className="lg:col-span-2">
+                                <div className="border border-border rounded-xl overflow-hidden ">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="border-b border-border bg-linear-to-b from-white/10 to-transparent text-white text-[10px] font-bold uppercase tracking-wider">
+                                                    <th className="py-3 px-4">Time Window</th>
+                                                    <th className="py-3 px-4">Application</th>
+                                                    <th className="py-3 px-4">Window Title</th>
+                                                    <th className="py-3 px-4 text-right">Duration</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border text-[11px] text-slate-300">
+                                                {filteredLog.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={4} className="py-8 text-center text-slate-500 font-medium">
+                                                            No matching activity logs found.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    filteredLog.map((session, idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-900/40 transition duration-150">
+                                                            <td className="py-3 px-4 font-mono text-slate-400">
+                                                                {formatTime(session.startTime)} - {formatTime(session.endTime)}
+                                                            </td>
+                                                            <td className="py-3 px-4 font-semibold text-indigo-300">
+                                                                {session.software}
+                                                            </td>
+                                                            <td className="py-3 px-4 truncate max-w-xs sm:max-w-md md:max-w-lg" title={session.title}>
+                                                                {session.title || <span className="text-slate-600 italic">No Title</span>}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-right font-bold text-slate-200">
+                                                                {formatDuration(session.duration)}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
