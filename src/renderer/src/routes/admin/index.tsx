@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { InspectionSidebar } from '../../components/admin/InspectionSidebar'
 import { User } from '../../components/admin/UserSelector'
 import {
   BarChart,
@@ -74,7 +73,7 @@ const CustomTooltip = ({
     if (activeItems.length === 0) return null
 
     return (
-      <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-2xl">
+      <div className="bg-slate-900/95  border border-slate-800 p-4 rounded-xl shadow-2xl ">
         <p className="font-semibold text-slate-200 mb-2 border-b border-slate-800 pb-1">{label}</p>
         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
           {activeItems.map((entry, index) => (
@@ -439,9 +438,13 @@ function RouteComponent() {
   const isIdle = idleTime >= IDLE_THRESHOLD
 
   return (
-    <div className="min-h-screen bg-black text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none">
-      {/* Dynamic Background Glows */}
-
+    <div className="min-h-screen bg-background  text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none">
+      <Link to="/" >
+        back
+      </Link>
+      <Link to="/admin/monthly-report" >
+        monthly report
+      </Link>
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Top Header */}
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4  pb-6">
@@ -554,7 +557,7 @@ function RouteComponent() {
         {/* Stats Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: Active Time */}
-          <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg hover:bg-card/90 transition duration-300">
+          <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
             <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -576,7 +579,7 @@ function RouteComponent() {
           </div>
 
           {/* Card 2: Idle Time */}
-          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg hover:border-amber-500/30 transition duration-300">
+          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
             <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -598,7 +601,7 @@ function RouteComponent() {
           </div>
 
           {/* Card 3: Active Ratio */}
-          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg hover:border-emerald-500/30 transition duration-300">
+          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
             <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -620,7 +623,7 @@ function RouteComponent() {
           </div>
 
           {/* Card 4: Top Application */}
-          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg hover:border-sky-500/30 transition duration-300">
+          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
             <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -700,7 +703,7 @@ function RouteComponent() {
                 </span>
               </div>
 
-              <div className="w-full overflow-x-auto scrollbar-thin pr-1 pb-1">
+              <div className="w-full overflow-x-auto custom-scrollbar pr-1 pb-1">
                 <div className="h-80 min-w-[800px] w-full shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartBins} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -791,7 +794,7 @@ function RouteComponent() {
               </div>
 
               {/* List of top colors/shares */}
-              <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
                 {pieChartData.map((entry, index) => (
                   <div key={index} className="flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-2">

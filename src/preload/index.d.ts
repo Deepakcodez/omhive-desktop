@@ -30,6 +30,38 @@ export type UsersWithLoginLogout = {
 }
 
 
+export type WorkStatus = 'working' | 'break' | 'logged_out'
+
+export interface AttendanceRecord {
+  id: string
+  userId: string
+  date: string
+  loginTime: string
+  logoutTime: string | null
+  expectedWorkSeconds: number
+  totalWorkSeconds: number
+  totalBreakSeconds: number
+  isPresent: boolean
+  status: WorkStatus
+  hostname: string
+  systemUsername: string
+  os: string
+  createdAt: string
+}
+
+export interface MonthAttendanceResponse {
+  data: {
+    attendance: AttendanceRecord[]
+    summary: {
+      totalDays: number
+      presentDays: number
+      totalWorkSeconds: number
+      totalBreakSeconds: number
+    }
+  }
+  success: boolean
+  message: string
+}
 
 
 
@@ -57,9 +89,10 @@ interface Api {
     success: boolean
     message: string
   }>
-  listUserWithLoginLogout: () => Promise<
+  listUserWithLoginLogout: (payload: { date: string }) => Promise<
     UsersWithLoginLogout
   >
+  getUserMonthlyReport: (payload: { month: number, year: number, userId: string }) => Promise<MonthAttendanceResponse>
   loginUser: (payload: { username: string }) => Promise<{
     data: {
       userId: string

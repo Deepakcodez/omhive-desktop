@@ -3,8 +3,6 @@ import { API_ENDPOINT } from "../constants"
 
 export function ActivityIpc() {
     ipcMain.handle('activity:track', async (_, payload: { userId: string, attendanceId: string, date: string, limit: number }) => {
-
-        console.log(payload.date)
         try {
             const limit = payload.limit || 100
             const url = new URL(`${API_ENDPOINT}/activity/date/${payload.date}`)

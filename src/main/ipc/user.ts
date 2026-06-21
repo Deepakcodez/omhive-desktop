@@ -169,9 +169,11 @@ export function UserIpc({ store, appState }: { store: UserStoreType; appState: A
       }
     }
   })
-  ipcMain.handle('user:with-login-logout', async () => {
+  ipcMain.handle('user:with-login-logout', async (_, payload: { date: string }) => {
     try {
-      const response = await fetch(API_ENDPOINT + '/user/with-login-logout', {
+      console.log("payload", payload)
+      const today = payload.date || new Date().toISOString().split('T')[0]
+      const response = await fetch(API_ENDPOINT + `/user/with-login-logout/${today}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -182,6 +184,32 @@ export function UserIpc({ store, appState }: { store: UserStoreType; appState: A
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
+      console.log("userf,", data)
+      return data
+    } catch (error) {
+      console.error('Error  in resuming user:', error)
+      return {
+        data: null,
+        success: false,
+        message: `Error - ${error}`
+      }
+    }
+  })
+  ipcMain.handle('user:attendance', async (_, payload: { month: number, year: number, userId: string }) => {
+    try {
+      console.log("payload", payload)
+      const response = await fetch(API_ENDPOINT + `/user/attendance/month/${payload.month}/year/${payload.year}/userId/${payload.userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      console.log("userf,", data)
       return data
     } catch (error) {
       console.error('Error  in resuming user:', error)

@@ -40,13 +40,13 @@ export default function UserListwithDetails({ onInspectUser }: UserListwithDetai
     const [error, setError] = React.useState<string | null>(null);
     const [filterDate, setFilterDate] = React.useState<string>('');
     const [isDatePickerOpen, setIsDatePickerOpen] = React.useState<boolean>(false);
-    
+
     const getUserDetails = async () => {
         setLoading(true)
         setError(null)
         try {
             const res: UsersWithLoginLogout =
-                await window.api.listUserWithLoginLogout()
+                await window.api.listUserWithLoginLogout({ date: filterDate })
             if (res.success && res.data) {
                 setUserDetails(res.data)
             } else {
@@ -129,7 +129,7 @@ export default function UserListwithDetails({ onInspectUser }: UserListwithDetai
                         <h2 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
                             <span>Users Attendance Sheet</span>
                             {filterDate && (
-                                <span className="bg-indigo-500/10 text-indigo-400 text-[10px] px-2 py-0.5 border border-indigo-500/25 rounded-md">
+                                <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 border border-primary/25 rounded-md">
                                     Date: {filterDate}
                                 </span>
                             )}

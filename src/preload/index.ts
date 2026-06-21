@@ -21,7 +21,8 @@ const api = {
   getAllSession: () => ipcRenderer.invoke('activity:get-all'),
   getSystemInfo: () => ipcRenderer.invoke('user:get-info'),
   listUser: () => ipcRenderer.invoke('user:list'),
-  listUserWithLoginLogout: () => ipcRenderer.invoke('user:with-login-logout'),
+  listUserWithLoginLogout: (payload: { date: string }) => ipcRenderer.invoke('user:with-login-logout', payload),
+  getUserMonthlyReport: (payload: { month: number, year: number, userId: string }) => ipcRenderer.invoke('user:attendance', payload),
   loginUser: (payload: {
     username: string
     hostname: string

@@ -3,7 +3,7 @@
 :root {
   --background: oklch(0% 0 0);
   --foreground: oklch(100% 0.00011 271.152);
-  --card: oklch(24.776% 0.00003 271.152);
+  --card: oklch(20.904% 0.00002 271.152);
   --card-foreground: oklch(100% 0.00011 271.152);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -18,7 +18,7 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(40.54% 0.00005 271.152);
+  --border: oklch(34.846% 0.00004 271.152);
   --input: oklch(0.922 0 0);
   --ring: oklch(40.54% 0.00005 271.152);
   --chart-1: oklch(0.87 0 0);
@@ -95,6 +95,37 @@ body,
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .hide-scroll {
-  -ms-overflow-style: none !important; /* IE and Edge */
-  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE and Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
+}
+
+
+
+
+/* Standard syntax for modern Chrome, Edge, and Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff69 #ffffff27;
+  /* thumb color | track color */
+}
+
+
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #ff000012;
+  /* color of the tracking area */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  /* color of the scroll thumb */
+  border-radius: 10px;
+  /* roundness of the scroll thumb */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+  /* color on hover */
 }

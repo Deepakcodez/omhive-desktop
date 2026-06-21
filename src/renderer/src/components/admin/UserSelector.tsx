@@ -11,6 +11,7 @@ export interface User {
 interface UserSelectorProps {
   users: User[]
   selectedUserId: string
+  setUsername?: (name: string) => void
   onSelectUser: (userId: string) => void
   loading?: boolean
 }
@@ -19,19 +20,29 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
   users,
   selectedUserId,
   onSelectUser,
+  setUsername,
   loading = false
 }) => {
   return (
     <div className="flex flex-col space-y-1.5 w-full">
-      <label className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+      <label className="text-foreground text-xs font-semibold uppercase tracking-wider">
         Select User
       </label>
       <div className="relative w-full">
         <select
           value={selectedUserId}
-          onChange={(e) => onSelectUser(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value
+            onSelectUser(val)
+            if (setUsername) {
+              const matched = users.find((u) => u.id === val)
+              if (matched) {
+                setUsername(matched.userName)
+              }
+            }
+          }}
           disabled={loading}
-          className="appearance-none w-full bg-slate-900 border border-slate-800 text-slate-200 px-4 py-2.5 pr-10 rounded-xl font-medium focus:outline-none focus:border-indigo-500/50 text-sm cursor-pointer shadow-lg hover:border-slate-700 transition disabled:opacity-50"
+          className="appearance-none w-full bg-card border border-border text-slate-200 px-4 py-2.5 pr-10 rounded-xl font-medium focus:outline-none text-sm cursor-pointer shadow-lg transition disabled:opacity-50"
         >
           <option value="" disabled>
             {loading ? 'Loading users...' : 'Choose a user'}
@@ -42,7 +53,7 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 border-l border-slate-800/80">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 border-l border-border">
           <svg
             className="fill-current h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
