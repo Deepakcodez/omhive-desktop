@@ -12,7 +12,7 @@ export default defineConfig({
       alias: {
         '@renderer': resolve('src/renderer/src')
       }
-    },
+    }, 
     plugins: [
       tanstackRouter({
         target: 'react',
