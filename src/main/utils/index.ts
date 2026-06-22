@@ -2,7 +2,7 @@ import { API_ENDPOINT } from '../constants'
 import { TSession } from '../types'
 
 export async function syncToServer(sessions: TSession[]): Promise<void> {
-  console.log("-----------",sessions[0])
+  console.log("-----------", sessions[0])
   try {
     const res = await fetch(`${API_ENDPOINT}/activity`, {
       method: 'POST',
@@ -43,7 +43,6 @@ export const isLoggedIn = async (
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
-    console.log(data.data)
     return data.data
   } catch (err) {
     console.error('[isLoggedIn] Failed:', err)

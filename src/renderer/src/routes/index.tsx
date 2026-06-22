@@ -181,13 +181,15 @@ function RouteComponent() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col gap-4 items-center justify-center p-4 select-none">
-      <div>
+      <div className='flex flex-col  justify-center items-center'>
         <h2 className="text-[10vw] leading-none font-bold mt-2 text-white/20">
           {currentTime.toLocaleTimeString()}
         </h2>
-        <p className="mt-4 text-white text-end">{currentTime.toLocaleDateString()}</p>
+        <div className='bg-linear-to-b from-white/30 to-card w-fit px-2 border-t border-t-white/30 rounded-full  '>
+        <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
+        </div>
       </div>
-      <div className="w-full max-w-2xl rounded-2xl bg-card shadow-xl p-6 border border-border">
+      <div className="w-full max-w-2xl rounded-2xl bg-linear-to-b from-white/20 to-card shadow-xl p-6 border border-white/30">
         {/* Header */}
         <div className="text-center mb-8"></div>
 

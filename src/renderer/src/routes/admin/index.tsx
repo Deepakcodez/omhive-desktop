@@ -166,15 +166,7 @@ function RouteComponent() {
     }
   }, [])
 
-  // const _handleApplyInspection = (userId: string, dateStr: string) => {
-  //   const userObj = users.find((u) => u.id === userId) || null
-  //   setInspectedUser(userObj)
-  //   setInspectedDate(dateStr)
-  //   setIsInspectorOpen(false)
-  //   if (userObj) {
-  //     loadInspectedSessions(userId, dateStr)
-  //   }
-  // }
+
 
   const getAllUsers = async () => {
     setLoadingUsers(true)

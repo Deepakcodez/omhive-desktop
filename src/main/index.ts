@@ -32,12 +32,33 @@ const appState = {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+// not current session  return null
+// 
 function closeCurrentSession(): TSession | null {
   if (!currentSession) return null
   const duration = (currentSession.endTime - currentSession.startTime) / 1000
-  if (duration < MIN_SESSION_DURATION_SEC) return null
-  return { ...currentSession, duration }
+  const session =
+    duration >= MIN_SESSION_DURATION_SEC
+      ? { ...currentSession, duration }
+      : null
+
+  currentSession = null
+
+  return session
 }
+
+function getCurrentSessionSnapshot(): TSession | null {
+  if (!currentSession) return null
+
+  const endTime = Date.now()
+
+  return {
+    ...currentSession,
+    endTime,
+    duration: (endTime - currentSession.startTime) / 1000
+  }
+}
+
 
 function pushToRenderer(session: TSession): void {
   mainWindow?.webContents.send('activity:update', session)
@@ -48,9 +69,12 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    x: 1200,
+    y: 12,
     title: 'Omhive',
     show: false,
     autoHideMenuBar: true,
+
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -90,22 +114,18 @@ app.whenReady().then(async () => {
   })
 
   const userInfo = userInfoStore.get('userInfo') as UserInfoType
+  console.log("user info--", userInfo)
 
-  console.log('Creating session', {
-    userId: appState.currentUserId,
-    attendanceId: appState.attendanceId
-  })
 
   if (userInfo.userId) {
     try {
       const session = await isLoggedIn(userInfo.userId)
-
       if (session?.loggedIn) {
         appState.trackingEnabled = true
         appState.currentUserId = userInfo.userId
-        appState.attendanceId = session.attendanceId || ''
+        appState.attendanceId = session.attendanceId || userInfo.attendanceId
       }
-
+      console.log("app state", appState)
       console.log('Creating session', {
         userId: appState.currentUserId,
         attendanceId: appState.attendanceId
@@ -130,16 +150,23 @@ app.whenReady().then(async () => {
   IPC_Handlers({ userInfoStore, appState })
 
   createWindow()
+
   // ── Poll: detect active window every second ─────────────────────────────
   setInterval(async () => {
     if (!appState.trackingEnabled) return
 
     const idleTime = powerMonitor.getSystemIdleTime()
+    console.log({
+      idleTime,
+      currentSession: !!currentSession,
+      trackingEnabled: appState.trackingEnabled
+    })
 
     // Send live idle time to renderer
     mainWindow?.webContents.send('idle-time', idleTime)
 
     if (idleTime >= IDLE_THRESHOLD_SEC) {
+      console.log("user is idea for", idleTime + " sec")
       // User went idle — close any open session
       const closed = closeCurrentSession()
       if (closed) {
@@ -176,6 +203,7 @@ app.whenReady().then(async () => {
 
     if (currentSession.software === software && currentSession.title === title) {
       // Still in the same window — extend session
+      console.log("same app opened just increased the time")
       currentSession.endTime = Date.now()
       return
     }
@@ -204,6 +232,15 @@ app.whenReady().then(async () => {
     console.log('step-1 pendingstatus first entry', pendingSessions[0])
   }, POLL_INTERVAL_MS)
 
+  // save session to the local db if user use same app for a long time
+  setInterval(() => {
+    const snapshot = getCurrentSessionSnapshot()
+
+    if (!snapshot || !store) return
+
+    store.set('currentSession', snapshot)
+  }, 6_000)
+
   // store activity locally after 1 minutes
   setInterval(() => {
     if (!appState.trackingEnabled) return
@@ -214,19 +251,25 @@ app.whenReady().then(async () => {
       store.set('sessions', [...existing, ...pendingSessions])
       pendingSessions = []
       console.log('Saved locally')
+    } else {
+      console.log("no store found in local sync func")
     }
-    console.log('step-2 pendingstatus first entry', pendingSessions[0])
   }, SYNC_LOCAL_INTERVAL_MS)
 
   // ── Sync: batch-send sessions to server every 5 min ──────────────────────
   setInterval(async () => {
-    if (!appState.trackingEnabled) return
-    const existing = store?.get('sessions', []) || []
-    console.log('existing', existing)
-    if (existing.length === 0) return
-    console.log('step-3 pendingstatus first entry', existing[0])
+    const sessions = store?.get('sessions', []) || []
+    const current = store?.get('currentSession') as TSession
+    console.log('data in local db ', sessions)
+    const payload = [...sessions]
+
+    if (current) {
+      payload.push(current)
+    }
+
+    if (payload.length === 0) return
     try {
-      await syncToServer(existing)
+      await syncToServer(payload)
       store?.set('sessions', [])
     } catch (error) {
       console.log('sending to server failed', error)
