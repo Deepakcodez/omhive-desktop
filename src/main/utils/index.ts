@@ -2,6 +2,7 @@ import { API_ENDPOINT } from '../constants'
 import { TSession } from '../types'
 
 export async function syncToServer(sessions: TSession[]): Promise<void> {
+  console.log("-----------",sessions[0])
   try {
     const res = await fetch(`${API_ENDPOINT}/activity`, {
       method: 'POST',

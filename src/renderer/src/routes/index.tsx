@@ -9,7 +9,7 @@ export const Route = createFileRoute('/')({
 function RouteComponent() {
   const [userName, setUserName] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [workStatus, setWorkStatus] = useState<'working' | 'break' | 'logged_out' | null>(null)
+  const [_workStatus, setWorkStatus] = useState<'working' | 'break' | 'logged_out' | null>(null)
 
   const getWorkingStatus = (): 'working' | 'break' | 'logged_out' | null => {
     const status = localStorage.getItem('status')
@@ -46,6 +46,12 @@ function RouteComponent() {
       }
 
       const resp = await window.api.loginUser({ username: getUserDetail()?.name || userName })
+      console.log(resp)
+      if (resp?.isAdmin) {
+        console.log("admin")
+        window.location.href = '/admin'
+        return
+      }
       if (!resp.success || resp.data === null) {
         await window.api.alert({
           title: 'Login Failed',

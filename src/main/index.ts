@@ -6,7 +6,6 @@ import { activeWindow } from 'get-windows'
 import os from 'os'
 import type Store from 'electron-store'
 import {
-  API_ENDPOINT,
   IDLE_THRESHOLD_SEC,
   MIN_SESSION_DURATION_SEC,
   POLL_INTERVAL_MS,
@@ -91,7 +90,12 @@ app.whenReady().then(async () => {
   })
 
   const userInfo = userInfoStore.get('userInfo') as UserInfoType
-  console.log('userId 93', userInfo.userId)
+
+  console.log('Creating session', {
+    userId: appState.currentUserId,
+    attendanceId: appState.attendanceId
+  })
+
   if (userInfo.userId) {
     try {
       const session = await isLoggedIn(userInfo.userId)
@@ -101,6 +105,11 @@ app.whenReady().then(async () => {
         appState.currentUserId = userInfo.userId
         appState.attendanceId = session.attendanceId || ''
       }
+
+      console.log('Creating session', {
+        userId: appState.currentUserId,
+        attendanceId: appState.attendanceId
+      })
     } catch (err) {
       console.error(err)
     }
@@ -192,7 +201,7 @@ app.whenReady().then(async () => {
       attendanceId: appState.attendanceId
     }
 
-    console.log('step-1 pendingstatus', pendingSessions)
+    console.log('step-1 pendingstatus first entry', pendingSessions[0])
   }, POLL_INTERVAL_MS)
 
   // store activity locally after 1 minutes
@@ -206,7 +215,7 @@ app.whenReady().then(async () => {
       pendingSessions = []
       console.log('Saved locally')
     }
-    console.log('step-2 pendingstatus', pendingSessions)
+    console.log('step-2 pendingstatus first entry', pendingSessions[0])
   }, SYNC_LOCAL_INTERVAL_MS)
 
   // ── Sync: batch-send sessions to server every 5 min ──────────────────────
@@ -215,7 +224,7 @@ app.whenReady().then(async () => {
     const existing = store?.get('sessions', []) || []
     console.log('existing', existing)
     if (existing.length === 0) return
-    console.log('step-3 pendingstatus', existing)
+    console.log('step-3 pendingstatus first entry', existing[0])
     try {
       await syncToServer(existing)
       store?.set('sessions', [])

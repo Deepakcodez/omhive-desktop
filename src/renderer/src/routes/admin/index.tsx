@@ -16,7 +16,7 @@ import {
 } from 'recharts'
 import UserListwithDetails from '@renderer/components/admin/userListwithDetails'
 
-const IDLE_THRESHOLD = 60 // seconds
+// const IDLE_THRESHOLD = 60 
 
 const PALETTE = [
   '#6366f1', // Indigo
@@ -129,16 +129,16 @@ const CustomPieTooltip = ({ active, payload }: CustomPieTooltipProps): React.JSX
 }
 
 function RouteComponent() {
-  const [idleTime, setIdleTime] = useState<number>(0)
+  const [_idleTime, setIdleTime] = useState<number>(0)
   const [sessions, setSessions] = useState<TSession[]>([])
-  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
+  const [selectedDate, _setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [now, setNow] = useState<number>(() => Date.now())
-  const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false)
+  const [_isInspectorOpen, _setIsInspectorOpen] = useState<boolean>(false)
 
   // Inspection states
   const [users, setUsers] = useState<User[]>([])
-  const [loadingUsers, setLoadingUsers] = useState<boolean>(false)
+  const [_loadingUsers, setLoadingUsers] = useState<boolean>(false)
   const [inspectedUser, setInspectedUser] = useState<User | null>(null)
   const [inspectedDate, setInspectedDate] = useState<string>('')
   const [inspectedSessions, setInspectedSessions] = useState<TSession[]>([])
@@ -166,15 +166,15 @@ function RouteComponent() {
     }
   }, [])
 
-  const handleApplyInspection = (userId: string, dateStr: string) => {
-    const userObj = users.find((u) => u.id === userId) || null
-    setInspectedUser(userObj)
-    setInspectedDate(dateStr)
-    setIsInspectorOpen(false)
-    if (userObj) {
-      loadInspectedSessions(userId, dateStr)
-    }
-  }
+  // const _handleApplyInspection = (userId: string, dateStr: string) => {
+  //   const userObj = users.find((u) => u.id === userId) || null
+  //   setInspectedUser(userObj)
+  //   setInspectedDate(dateStr)
+  //   setIsInspectorOpen(false)
+  //   if (userObj) {
+  //     loadInspectedSessions(userId, dateStr)
+  //   }
+  // }
 
   const getAllUsers = async () => {
     setLoadingUsers(true)
@@ -252,16 +252,17 @@ function RouteComponent() {
   const isInspecting = inspectedUser !== null
 
   // Get unique sorted list of dates (most recent first)
-  const uniqueDates = useMemo((): string[] => {
-    const dates = new Set<string>()
-    dates.add(new Date().toLocaleDateString())
+  // const uniqueDates = useMemo((): string[] => {
+  //   const dates = new Set<string>()
+  //   dates.add(new Date().toLocaleDateString())
 
-    const activeSessionsList = isInspecting ? inspectedSessions : sessions
-    activeSessionsList.forEach((s) => {
-      dates.add(new Date(s.startTime).toLocaleDateString())
-    })
-    return Array.from(dates).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-  }, [isInspecting, inspectedSessions, sessions])
+  //   const activeSessionsList = isInspecting ? inspectedSessions : sessions
+  //   activeSessionsList.forEach((s) => {
+  //     dates.add(new Date(s.startTime).toLocaleDateString())
+  //   })
+    
+  //   return Array.from(dates).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+  // }, [isInspecting, inspectedSessions, sessions])
 
   // Filter sessions for selected date
   const filteredSessions = useMemo((): TSession[] => {
@@ -448,15 +449,12 @@ function RouteComponent() {
     })
   }, [filteredSessions, searchQuery])
 
-  const isIdle = idleTime >= IDLE_THRESHOLD
+  // const isIdle = idleTime >= IDLE_THRESHOLD
 
   return (
     <div className="min-h-screen bg-background  text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none">
       <Link to="/" >
         back
-      </Link>
-      <Link to="/admin/monthly-report" >
-        monthly report
       </Link>
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Top Header */}
@@ -468,103 +466,12 @@ function RouteComponent() {
             </p>
           </div>
 
-          {isInspecting ? (
-            <div className="flex flex-wrap items-center gap-4 bg-indigo-950/20 border border-indigo-500/25 px-5 py-3 rounded-2xl backdrop-blur-md animate-fade-in">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm">
-                  {(inspectedUser?.fullName || inspectedUser?.userName || 'U')[0].toUpperCase()}
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">Inspecting User</p>
-                  <h4 className="text-sm font-bold text-slate-100">
-                    {inspectedUser?.fullName || inspectedUser?.userName} <span className="text-slate-500 font-medium text-xs">(@{inspectedUser?.userName})</span>
-                  </h4>
-                </div>
-              </div>
-
-              <div className="h-6 w-px bg-slate-800/80 hidden sm:block" />
-
-              <div className="space-y-0.5">
-                <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Selected Date</p>
-                <p className="text-xs font-bold text-slate-300">{inspectedDate}</p>
-              </div>
-
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  onClick={() => setIsInspectorOpen(true)}
-                  className="bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-300 px-3.5 py-1.5 rounded-full font-semibold text-xs cursor-pointer active:scale-95 transition duration-150"
-                >
-                  Change Select
-                </button>
-                <button
-                  onClick={() => {
-                    setInspectedUser(null)
-                    setInspectedSessions([])
-                  }}
-                  className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3.5 py-1.5 rounded-full font-semibold text-xs cursor-pointer active:scale-95 transition duration-150 flex items-center space-x-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  <span>Exit</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Controls & Active State */
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Status indicator */}
-              <div className="flex items-center space-x-2 bg-card border border-border px-4 py-2 rounded-full">
-                <span className="relative flex h-2 w-2">
-                  <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isIdle ? 'bg-amber-400' : 'bg-primary'}`}
-                  ></span>
-                  <span
-                    className={`relative inline-flex rounded-full h-2 w-2 ${isIdle ? 'bg-amber-500' : 'bg-primary2'}`}
-                  ></span>
-                </span>
-                <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">
-                  {isIdle ? `Idle: ${idleTime}s` : 'Active'}
-                </span>
-              </div>
-
-              {/* Inspect User Button */}
-              <button
-                onClick={() => setIsInspectorOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.02] text-white px-5 py-2 rounded-full font-semibold focus:outline-none text-xs cursor-pointer shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-200 flex items-center space-x-2 border border-indigo-500/20"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <span>Inspect User</span>
-              </button>
-
-              {/* Date Select Dropdown */}
-              <div className="relative">
-                <select
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="appearance-none bg-card border border-border text-slate-200 px-4 py-2 pr-10 rounded-full font-medium focus:outline-none  text-sm cursor-pointer shadow-lg hover:border-slate-700 transition"
-                >
-                  {uniqueDates.map((date) => (
-                    <option key={date} value={date}>
-                      {date === new Date().toLocaleDateString() ? `Today (${date})` : date}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 border-l border-slate-800">
-                  <svg
-                    className="fill-current h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          )}
+          <Link
+            to="/admin/monthly-report"
+            title='Monthly Report'
+            className='bg-card rounded-full px-4 py-2 border border-border text-sm cursor-default'>
+            See Monthly Report
+          </Link>
         </header>
 
         {/* Stats Grid */}

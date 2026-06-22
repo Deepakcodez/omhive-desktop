@@ -102,6 +102,7 @@ interface Api {
       loginTime: Date
     } | null
     success: boolean
+    isAdmin?: boolean
     message: string
   }>
   breakUser: (payload: { attendanceId: string }) => Promise<{

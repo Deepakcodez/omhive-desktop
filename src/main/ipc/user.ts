@@ -40,7 +40,8 @@ export function UserIpc({ store, appState }: { store: UserStoreType; appState: A
       return {
         data: data.data,
         success: true,
-        message: 'User logged in'
+        message: 'User logged in',
+        isAdmin: data.isAdmin
       }
     } catch (error) {
       console.error('Error logging in user:', error)
@@ -171,7 +172,7 @@ export function UserIpc({ store, appState }: { store: UserStoreType; appState: A
   })
   ipcMain.handle('user:with-login-logout', async (_, payload: { date: string }) => {
     try {
-      console.log("payload", payload)
+      console.log("user:with-login-logout payload", payload)
       const today = payload.date || new Date().toISOString().split('T')[0]
       const response = await fetch(API_ENDPOINT + `/user/with-login-logout/${today}`, {
         method: 'GET',

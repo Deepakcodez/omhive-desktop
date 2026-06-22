@@ -62,7 +62,7 @@ export default function UserListwithDetails({ onInspectUser }: UserListwithDetai
 
     useEffect(() => {
         getUserDetails()
-    }, [])
+    }, [filterDate])
 
     // Flatten data for table view
     const rows = useMemo(() => {
