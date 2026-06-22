@@ -128,13 +128,13 @@ const CustomPieTooltip = ({ active, payload }: CustomPieTooltipProps): React.JSX
   return null
 }
 
+
 function RouteComponent() {
   const [_idleTime, setIdleTime] = useState<number>(0)
   const [sessions, setSessions] = useState<TSession[]>([])
   const [selectedDate, _setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [now, setNow] = useState<number>(() => Date.now())
-  const [_isInspectorOpen, _setIsInspectorOpen] = useState<boolean>(false)
 
   // Inspection states
   const [users, setUsers] = useState<User[]>([])
@@ -151,10 +151,10 @@ function RouteComponent() {
         userId,
         date: dateStr,
         attendanceId: '',
-        limit: 500
+        limit: 100
       })
       if (response.success && response.data) {
-        setInspectedSessions(response.data)
+        setInspectedSessions(response.data.data)
       } else {
         setInspectedSessions([])
       }
@@ -198,9 +198,9 @@ function RouteComponent() {
   const loadSessions = useCallback(async (): Promise<void> => {
     try {
       const dbData = await window.api.getAllSession()
-      const pendingData = await window.api.getPendingSessions()
+      // const pendingData = await window.api.getPendingSessions()
 
-      const all = [...(dbData?.sessions || []), ...(pendingData || [])]
+      const all = [...(dbData?.sessions || [])]
 
       // De-duplicate sessions by startTime to ensure clean charts
       const unique = all.reduce<TSession[]>((acc, s) => {

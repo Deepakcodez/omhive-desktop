@@ -134,7 +134,24 @@ interface Api {
     attendanceId: string
     limit: number
   }) => Promise<{
-    data: TSession[] | null
+    data: {
+      data: {
+        id: string;
+        attendanceId: string;
+        userId: string;
+        activityType: "break" | "work";
+        startTime: Date;
+        endTime: Date;
+        duration: number;
+        software: string;
+        title: string;
+        hostname: string;
+        systemUsername: string;
+      }[];
+      total: number;
+      limit: number;
+      offset: number;
+    } | null
     success: boolean
     message: string
   }>;
@@ -162,3 +179,5 @@ declare global {
     api: Api
   }
 }
+
+
