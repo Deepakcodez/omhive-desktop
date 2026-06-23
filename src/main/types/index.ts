@@ -57,4 +57,12 @@ export type UsersWithLoginLogout = {
 }
 
 
+export type StoreType = {
+  userInfo: UserInfoType
+  sessions: TSession[]
+  currentSession?: TSession
+}
+
+
+
 export type UserStoreType = Store<UserInfoType> | null

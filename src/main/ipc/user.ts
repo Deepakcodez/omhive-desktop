@@ -1,12 +1,13 @@
 import { ipcMain } from 'electron'
 import os from 'os'
 import { API_ENDPOINT } from '../constants'
-import { AppState, UserStoreType } from '../types'
+import { AppState, StoreType } from '../types'
+import type ElectronStore from 'electron-store'
 
 const HOSTNAME = os.hostname()
 const USERNAME = os.userInfo().username
 
-export function UserIpc({ store, appState }: { store: UserStoreType; appState: AppState }) {
+export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; appState: AppState }) {
   ipcMain.handle('user:login', async (_, payload: { username: string }) => {
     const bodyData = {
       userName: payload.username,

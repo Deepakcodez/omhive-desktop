@@ -4,7 +4,6 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { activeWindow } from 'get-windows'
 import os from 'os'
-import type Store from 'electron-store'
 import {
   IDLE_THRESHOLD_SEC,
   MIN_SESSION_DURATION_SEC,
@@ -12,9 +11,11 @@ import {
   SYNC_LOCAL_INTERVAL_MS,
   SYNC_REMOTE_INTERVAL_MS
 } from './constants'
-import type { TSession, UserInfoType } from './types'
+import type { StoreType, TSession,  } from './types'
 import { IPC_Handlers } from './ipc'
 import { isLoggedIn, syncToServer } from './utils'
+
+
 
 // ── System identity (resolved once at startup) ─────────────────────────────
 const HOSTNAME = os.hostname()
@@ -24,7 +25,6 @@ const USERNAME = os.userInfo().username
 let currentSession: TSession | null = null
 let pendingSessions: TSession[] = []
 let mainWindow: BrowserWindow | null = null
-let store: Store<{ sessions: TSession[] }> | null = null
 const appState = {
   trackingEnabled: false,
   currentUserId: '',
@@ -100,20 +100,19 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   const { default: Store } = await import('electron-store')
 
-  store = new Store<{ sessions: TSession[] }>({
+  const store = new Store<StoreType>({
     defaults: {
+      userInfo: {
+        userId: '',
+        userName: '',
+        attendanceId: ''
+      },
       sessions: []
     }
   })
-  const userInfoStore = new Store<UserInfoType>({
-    defaults: {
-      userId: '',
-      userName: '',
-      attendanceId: ''
-    }
-  })
 
-  const userInfo = userInfoStore.get('userInfo') as UserInfoType
+
+ const userInfo = store.get('userInfo')
   console.log("user info--", userInfo)
 
 
@@ -147,7 +146,7 @@ app.whenReady().then(async () => {
     sessions: store ? store.get('sessions', []) : []
   }))
 
-  IPC_Handlers({ userInfoStore, appState })
+  IPC_Handlers({ store, appState })
 
   createWindow()
 
