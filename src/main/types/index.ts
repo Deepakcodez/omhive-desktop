@@ -1,6 +1,7 @@
 import type Store from 'electron-store'
 
 export type TSession = {
+  syncId: string
   userId: string
   attendanceId: string
   activityType: 'work' | 'break'

@@ -1,8 +1,16 @@
 import { API_ENDPOINT } from '../constants'
 import { TSession } from '../types'
 
+
+export function getLocalDate(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata'
+  }).format(date)
+}
+
+
+
 export async function syncToServer(sessions: TSession[]): Promise<void> {
-  console.log("-----------", sessions[0])
   try {
     const res = await fetch(`${API_ENDPOINT}/activity`, {
       method: 'POST',

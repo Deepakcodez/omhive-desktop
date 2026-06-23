@@ -100,6 +100,7 @@ interface Api {
       attendanceId: string
       existing: boolean
       loginTime: Date
+      status: "working" | "break" 
     } | null
     success: boolean
     isAdmin?: boolean
@@ -109,6 +110,8 @@ interface Api {
     data: {
       breakId: string
       startTime: Date
+      status: "working" | "break" 
+
     } | null
     success: boolean
     message: string
@@ -117,6 +120,8 @@ interface Api {
     data: {
       durationSeconds: number
       resumedAt: Date
+      status: "working" | "break" 
+
     }
     success: boolean
     message: string

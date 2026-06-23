@@ -11,9 +11,10 @@ import {
   SYNC_LOCAL_INTERVAL_MS,
   SYNC_REMOTE_INTERVAL_MS
 } from './constants'
-import type { StoreType, TSession,  } from './types'
+import type { StoreType, TSession, } from './types'
 import { IPC_Handlers } from './ipc'
 import { isLoggedIn, syncToServer } from './utils'
+import { randomUUID } from 'crypto'
 
 
 
@@ -112,7 +113,7 @@ app.whenReady().then(async () => {
   })
 
 
- const userInfo = store.get('userInfo')
+  const userInfo = store.get('userInfo')
   console.log("user info--", userInfo)
 
 
@@ -186,6 +187,7 @@ app.whenReady().then(async () => {
     if (!currentSession) {
       // First window seen
       currentSession = {
+        syncId: randomUUID(),
         startTime: Date.now(),
         endTime: Date.now(),
         duration: 0,
@@ -216,6 +218,7 @@ app.whenReady().then(async () => {
 
     // Start fresh session for new window
     currentSession = {
+      syncId: randomUUID(),
       startTime: Date.now(),
       endTime: Date.now(),
       duration: 0,

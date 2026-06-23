@@ -1,3 +1,4 @@
+import { cn } from '@renderer/lib/utils'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -7,21 +8,12 @@ export const Route = createFileRoute('/')({
 })
 
 function RouteComponent() {
-  const [userName, setUserName] = useState('')
+  const [user, setUser] = useState<{ name: string, id: string } | null>(null)
+  const [inputUserName, setInputUserName] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [_workStatus, setWorkStatus] = useState<'working' | 'break' | 'logged_out' | null>(null)
+  const [workStatus, setWorkStatus] = useState<'working' | 'break' | null>(null)
 
-  const getWorkingStatus = (): 'working' | 'break' | 'logged_out' | null => {
-    const status = localStorage.getItem('status')
-    return status as 'working' | 'break' | 'logged_out' | null
-  }
-  const getUserDetail = (): { name: string; id: string } | null => {
-    const name = localStorage.getItem('userName')
-    const id = localStorage.getItem('userId')
-    if (name && id) return { name, id }
-    return null
-  }
-  const setWorkingStatus = (status: 'working' | 'break' | 'logged_out') => {
+  const setWorkingStatus = (status: 'working' | 'break') => {
     localStorage.setItem('status', status)
     setWorkStatus(status)
   }
@@ -34,9 +26,29 @@ function RouteComponent() {
     return () => clearInterval(timer)
   }, [])
 
-  const handleAction = async (action: string) => {
+  useEffect(() => {
+    const status = localStorage.getItem('status')
+    const userId = localStorage.getItem('userId')
+    const userName = localStorage.getItem('userName')
+
+    if (status) {
+      setWorkStatus(status as 'working' | 'break')
+    }
+
+    if (userId && userName) {
+      setUser({
+        id: userId,
+        name: userName
+      })
+    }
+  }, [])
+
+  const handleAction = async (action: 'LOGIN' | 'BREAK' | 'RESUME' | 'LOGOUT') => {
     if (action === 'LOGIN') {
-      if (!getUserDetail()?.name.trim() && !userName.trim()) {
+      const username =
+        user?.name || inputUserName.trim()
+
+      if (!username) {
         await window.api.alert({
           title: 'Username Required',
           message: 'Please enter your username',
@@ -44,8 +56,7 @@ function RouteComponent() {
         })
         return
       }
-
-      const resp = await window.api.loginUser({ username: getUserDetail()?.name || userName })
+      const resp = await window.api.loginUser({ username })
       console.log(resp)
       if (resp?.isAdmin) {
         console.log("admin")
@@ -64,6 +75,8 @@ function RouteComponent() {
         localStorage.setItem('userId', resp.data.userId)
         localStorage.setItem('userName', resp.data.userName)
         localStorage.setItem('attendanceId', resp.data.attendanceId)
+        setUser({ name: resp.data.userName, id: resp.data.userId })
+        setWorkingStatus(resp.data.status)
         await window.api.alert({
           title: 'Already Logged in',
           message: `Your are Already logged in at ${new Date(resp.data.loginTime).toLocaleString()}`,
@@ -75,7 +88,8 @@ function RouteComponent() {
         localStorage.setItem('userId', resp.data.userId)
         localStorage.setItem('userName', resp.data.userName)
         localStorage.setItem('attendanceId', resp.data.attendanceId)
-        setWorkingStatus('working')
+        setUser({ name: resp.data.userName, id: resp.data.userId })
+        setWorkingStatus(resp.data.status)
         toast.success('Logged in successfully')
       }
     }
@@ -162,7 +176,10 @@ function RouteComponent() {
             type: 'info'
           })
         } else {
-          setWorkingStatus('logged_out')
+          localStorage.removeItem("attendanceId")
+          localStorage.removeItem("status")
+          localStorage.removeItem("breakId")
+          setWorkStatus(null)
           await window.api.alert({
             type: 'info',
             title: 'Logged Out Successfully',
@@ -186,7 +203,7 @@ function RouteComponent() {
           {currentTime.toLocaleTimeString()}
         </h2>
         <div className='bg-linear-to-b from-white/30 to-card w-fit px-2 border-t border-t-white/30 rounded-full  '>
-        <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
+          <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
         </div>
       </div>
       <div className="w-full max-w-2xl rounded-2xl bg-linear-to-b from-white/20 to-card shadow-xl p-6 border border-white/30">
@@ -194,40 +211,52 @@ function RouteComponent() {
         <div className="text-center mb-8"></div>
 
         {/* Username */}
-        {!getUserDetail() && (
+        {(!user?.name || !user.id) && (
           <div className="mb-6">
             <label className="block mb-2 font-medium text-foreground">Username</label>
 
             <input
               type="text"
               placeholder="Enter username"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
+              value={inputUserName}
+              onChange={(e) => setInputUserName(e.target.value)}
               className="w-full   bg-foreground p-3 outline-none rounded-full"
             />
           </div>
         )}
 
-        {getUserDetail() && (
+        {user?.name && (
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-foreground">
-              Welcome Back <span className="text-primary uppercase">{getUserDetail()?.name}</span>!
+              Welcome Back <span className="text-primary uppercase">{user?.name}</span>!
             </h1>
           </div>
         )}
 
         {/* Buttons */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <button
-            onClick={() => handleAction('LOGIN')}
-            className="rounded-lg bg-green-600 text-white py-3 font-semibold hover:opacity-90"
+            onClick={() => {
+              const isLoggedIn =
+                workStatus === 'working' ||
+                workStatus === 'break'
+              isLoggedIn ?
+                handleAction('LOGOUT') :
+                handleAction('LOGIN')
+            }}
+            className={cn("rounded-full text-white py-3 font-semibold hover:opacity-90 active:scale-95  transition-all duration-300",
+              (workStatus === 'working' ||
+                workStatus === 'break') ? 'bg-linear-to-b from-red-500 to-red-600 border border-red-400' : 'bg-linear-to-b from-green-500 to-green-600')}
           >
-            {getWorkingStatus() === 'working' ? 'Working' : 'Login'}
+            {(workStatus === 'working' ||
+              workStatus === 'break') ? 'Logout' : 'Login'}
           </button>
 
           <button
             onClick={() => {
-              if (getWorkingStatus() === 'logged_out') {
+              const attendanceId =
+                localStorage.getItem('attendanceId')
+              if (!attendanceId) {
                 window.api.alert({
                   title: 'Already Logged Out',
                   message: 'You are already logged out',
@@ -235,29 +264,27 @@ function RouteComponent() {
                 })
                 return
               }
-              if (getWorkingStatus() == 'break') {
+              if (workStatus == 'break') {
                 console.log('clling resume')
                 handleAction('RESUME')
               } else {
                 handleAction('BREAK')
               }
             }}
-            className="rounded-lg bg-yellow-500 text-white py-3 font-semibold hover:opacity-90"
+            className={cn("rounded-full  text-white py-3 font-semibold hover:opacity-90 active:scale-95  transition-all duration-300",
+              workStatus === 'break' ? "bg-linear-to-b from-purple-500 to-purple-600 border border-purple-400" : "bg-linear-to-b from-yellow-500 to-yellow-600 border border-yellow-400"
+
+            )}
           >
-            {getWorkingStatus() === 'break' ? 'Resume' : 'Break'}
+            {workStatus === 'break' ? 'Resume' : 'Break'}
           </button>
 
-          <button
-            onClick={() => handleAction('LOGOUT')}
-            className="rounded-lg bg-red-600 text-white py-3 font-semibold hover:opacity-90"
-          >
-            Logout
-          </button>
+
         </div>
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-gray-500">
-          Status: {getWorkingStatus()?.toUpperCase() || 'Not Logged In Yet'}
+          Status: {workStatus?.toUpperCase() || 'Not Logged In Yet'}
         </div>
         <Link to="/admin">go to dashboard</Link>
       </div>
