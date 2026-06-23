@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { User, UserSelector } from './UserSelector'
 import { DatePicker } from './DatePicker'
 
+
 interface InspectionSidebarProps {
   isOpen: boolean
   onClose: () => void
@@ -52,7 +53,7 @@ export const InspectionSidebar: React.FC<InspectionSidebarProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop overlay */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
         onClick={onClose}
       />

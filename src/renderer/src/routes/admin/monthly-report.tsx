@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { User, UserSelector } from "../../components/admin/UserSelector";
+import { User, UserSelector } from "../../features/admin/components/UserSelector";
 import {
     BarChart,
     Bar,
@@ -25,6 +25,7 @@ import {
     Search,
     X
 } from "lucide-react";
+import { DetailedSession } from "@renderer/features/admin/types";
 
 export const Route = createFileRoute('/admin/monthly-report')({
     component: RouteComponent
@@ -557,7 +558,7 @@ function ActivityModal({
     date: string;
     onClose: () => void
 }) {
-    const [activities, setActivities] = useState<TSession[]>([]);
+    const [activities, setActivities] = useState<DetailedSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -574,7 +575,7 @@ function ActivityModal({
                     limit: 500
                 });
                 if (response.success && response.data) {
-                    setActivities(response.data);
+                    setActivities(response.data.data);
                 } else {
                     setError(response.message || "No activity records found.");
                 }
@@ -622,9 +623,9 @@ function ActivityModal({
         })).sort((a, b) => b.value - a.value);
     }, [activities]);
 
-    const formatTime = (timeMs: number) => {
+    const formatTime = (timeMs: number | Date) => {
         try {
-            const d = new Date(timeMs);
+            const d = new Date(timeMs as any);
             if (isNaN(d.getTime())) return String(timeMs);
             return d.toLocaleTimeString([], {
                 hour: '2-digit',

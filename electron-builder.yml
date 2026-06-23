@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.omhive.app
 productName: omhive
 directories:
   buildResources: build

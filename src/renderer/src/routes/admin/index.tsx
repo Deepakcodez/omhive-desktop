@@ -1,138 +1,41 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { User } from '../../components/admin/UserSelector'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts'
-import UserListwithDetails from '@renderer/components/admin/userListwithDetails'
+import { User } from '../../features/admin/components/UserSelector'
+import UserListwithDetails from '@renderer/features/admin/components/userListwithDetails'
+import Header from '@renderer/features/admin/components/header'
+import StatsGrid from '@renderer/features/admin/components/statsGrid'
+import HourlyTimeline from '@renderer/features/admin/components/hourlyTimeline'
+import { getAppColor } from '@renderer/features/admin/utils'
+import { ChartBin, DetailedSession } from '@renderer/features/admin/types'
+import DetailedSessionHeader from '@renderer/features/admin/components/DetailedSessionHeader'
+import DetailedLogTable from '@renderer/features/admin/components/detailedLogTable'
 
-// const IDLE_THRESHOLD = 60 
 
-const PALETTE = [
-  '#6366f1', // Indigo
-  '#10b981', // Emerald
-  '#f59e0b', // Amber
-  '#ec4899', // Pink
-  '#3b82f6', // Blue
-  '#8b5cf6', // Violet
-  '#f43f5e', // Rose
-  '#06b6d4', // Cyan
-  '#84cc16', // Lime
-  '#14b8a6' // Teal
-]
 
-const getAppColor = (app: string, index: number): string => {
-  if (app === 'Idle') return '#475569' // Slate 600
-  return PALETTE[index % PALETTE.length]
-}
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{
-    name: string
-    value: number
-    color: string
-    fill?: string
-  }>
-  label?: string
-}
+
+// type DetailedSessionResponse = {
+//   data: DetailedSession[]
+//   limit: number
+//   offset: number
+//   total: number
+//   message: string
+//   success: boolean
+// }
+
 
 export const Route = createFileRoute('/admin/')({
   component: RouteComponent
 })
 
-// Custom tooltip for stacked BarChart
-const CustomTooltip = ({
-  active,
-  payload,
-  label
-}: CustomTooltipProps): React.JSX.Element | null => {
+const WORK_TARGET_SEC = 9 * 60 * 60 // 9 hours in seconds
 
 
-
-
-
-
-
-  if (active && payload && payload.length) {
-    // Sort items by value descending (hide zero values)
-    const activeItems = [...payload]
-      .filter((item) => item.value > 0)
-      .sort((a, b) => b.value - a.value)
-
-    if (activeItems.length === 0) return null
-
-    return (
-      <div className="bg-slate-900/95  border border-slate-800 p-4 rounded-xl shadow-2xl ">
-        <p className="font-semibold text-slate-200 mb-2 border-b border-slate-800 pb-1">{label}</p>
-        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-          {activeItems.map((entry, index) => (
-            <div key={index} className="flex items-center justify-between space-x-6 text-xs">
-              <div className="flex items-center space-x-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: entry.color || entry.fill }}
-                />
-                <span className="text-slate-400 font-medium truncate max-w-[120px]">
-                  {entry.name}
-                </span>
-              </div>
-              <span className="text-slate-100 font-bold">{entry.value} min</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-  return null
-}
-
-interface CustomPieTooltipProps {
-  active?: boolean
-  payload?: Array<{
-    payload: {
-      name: string
-      value: number
-      color: string
-    }
-  }>
-}
-
-// Custom tooltip for PieChart
-const CustomPieTooltip = ({ active, payload }: CustomPieTooltipProps): React.JSX.Element | null => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload
-    return (
-      <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 p-3 rounded-xl shadow-2xl">
-        <div className="flex items-center space-x-2 text-xs">
-          <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: data.color }}
-          />
-          <span className="text-slate-400 font-medium">{data.name}:</span>
-          <span className="text-slate-100 font-bold">{data.value} min</span>
-        </div>
-      </div>
-    )
-  }
-  return null
-}
 
 
 function RouteComponent() {
-  const [_idleTime, setIdleTime] = useState<number>(0)
-  const [sessions, setSessions] = useState<TSession[]>([])
-  const [selectedDate, _setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
+
+  const [_selectedDate, _setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [now, setNow] = useState<number>(() => Date.now())
 
@@ -141,8 +44,14 @@ function RouteComponent() {
   const [_loadingUsers, setLoadingUsers] = useState<boolean>(false)
   const [inspectedUser, setInspectedUser] = useState<User | null>(null)
   const [inspectedDate, setInspectedDate] = useState<string>('')
-  const [inspectedSessions, setInspectedSessions] = useState<TSession[]>([])
+  const [inspectedSessions, setInspectedSessions] = useState<DetailedSession[]>([])
   const [loadingInspection, setLoadingInspection] = useState<boolean>(false)
+
+  const isInspecting = inspectedUser !== null
+  const isSelectedToday = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0]
+    return inspectedDate === todayStr
+  }, [inspectedDate])
 
   const loadInspectedSessions = useCallback(async (userId: string, dateStr: string) => {
     setLoadingInspection(true)
@@ -153,6 +62,7 @@ function RouteComponent() {
         attendanceId: '',
         limit: 100
       })
+      console.log('inspected sessions detailed session data', response)
       if (response.success && response.data) {
         setInspectedSessions(response.data.data)
       } else {
@@ -194,108 +104,35 @@ function RouteComponent() {
     return (): void => clearInterval(timer)
   }, [])
 
-  // Load database sessions and pending sessions
-  const loadSessions = useCallback(async (): Promise<void> => {
-    try {
-      const dbData = await window.api.getAllSession()
-      // const pendingData = await window.api.getPendingSessions()
 
-      const all = [...(dbData?.sessions || [])]
 
-      // De-duplicate sessions by startTime to ensure clean charts
-      const unique = all.reduce<TSession[]>((acc, s) => {
-        if (!acc.some((x) => x.startTime === s.startTime)) {
-          acc.push(s)
-        }
-        return acc
-      }, [])
-
-      // Sort descending by startTime (latest first)
-      unique.sort((a, b) => b.startTime - a.startTime)
-      setSessions(unique)
-    } catch (error) {
-      console.error('Failed to load sessions:', error)
-    }
-  }, [])
-
-  useEffect((): (() => void) => {
-    Promise.resolve().then((): Promise<void> => loadSessions())
-
-    // Setup IPC listeners
-    window.api.onIdleTime((time) => setIdleTime(time))
-    window.api.onActivityUpdate((session) => {
-      setSessions((prev) => {
-        if (prev.some((s) => s.startTime === session.startTime)) return prev
-        const updated = [session, ...prev]
-        return updated.sort((a, b) => b.startTime - a.startTime)
-      })
-    })
-
-    // Refresh data periodically
-    const interval = setInterval(loadSessions, 10000)
-
-    return (): void => {
-      clearInterval(interval)
-      window.api.removeIdleTimeListener()
-      window.api.removeActivityListeners()
-    }
-  }, [loadSessions])
-
-  const isInspecting = inspectedUser !== null
-
-  // Get unique sorted list of dates (most recent first)
-  // const uniqueDates = useMemo((): string[] => {
-  //   const dates = new Set<string>()
-  //   dates.add(new Date().toLocaleDateString())
-
-  //   const activeSessionsList = isInspecting ? inspectedSessions : sessions
-  //   activeSessionsList.forEach((s) => {
-  //     dates.add(new Date(s.startTime).toLocaleDateString())
-  //   })
-    
-  //   return Array.from(dates).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-  // }, [isInspecting, inspectedSessions, sessions])
-
-  // Filter sessions for selected date
-  const filteredSessions = useMemo((): TSession[] => {
-    if (isInspecting) {
-      return inspectedSessions
-    }
-    return sessions.filter((s) => new Date(s.startTime).toLocaleDateString() === selectedDate)
-  }, [isInspecting, inspectedSessions, sessions, selectedDate])
-
-  const isSelectedToday = useMemo(() => {
-    if (isInspecting) {
-      const todayStr = new Date().toISOString().split('T')[0]
-      return inspectedDate === todayStr
-    }
-    return selectedDate === new Date().toLocaleDateString()
-  }, [isInspecting, inspectedDate, selectedDate])
 
   // Calculate statistics for the selected date
   const stats = useMemo(() => {
-    if (filteredSessions.length === 0) {
+    if (inspectedSessions.length === 0) {
       return {
         totalActiveSec: 0,
         totalIdleSec: 0,
         ratio: 0,
         topApp: 'None',
         formattedActive: '0m',
-        formattedIdle: '0m'
+        formattedIdle: '0m',
+        workHourProgress: 0,
+        remainingSec: WORK_TARGET_SEC
       }
     }
 
-    const firstTime = Math.min(...filteredSessions.map((s) => new Date(s.startTime).getTime()))
-    const lastTime = Math.max(...filteredSessions.map((s) => new Date(s.endTime).getTime()))
+    const firstTime = Math.min(...inspectedSessions.map((s) => new Date(s.startTime).getTime()))
+    const lastTime = Math.max(...inspectedSessions.map((s) => new Date(s.endTime).getTime()))
     const endAnchor = isSelectedToday ? now : lastTime
     const elapsedSec = Math.max(0, (endAnchor - firstTime) / 1000)
 
-    const totalActiveSec = filteredSessions.reduce((acc, s) => acc + s.duration, 0)
+    const totalActiveSec = inspectedSessions.reduce((acc, s) => acc + s.duration, 0)
     const totalIdleSec = Math.max(0, elapsedSec - totalActiveSec)
 
     // Calculate top software application
     const appDurations: Record<string, number> = {}
-    filteredSessions.forEach((s) => {
+    inspectedSessions.forEach((s) => {
       appDurations[s.software] = (appDurations[s.software] || 0) + s.duration
     })
     let topApp = 'None'
@@ -318,28 +155,29 @@ function RouteComponent() {
       return `${s}s`
     }
 
+    const workHourProgress = Math.min(Math.round((totalActiveSec / WORK_TARGET_SEC) * 100), 100)
+    const remainingSec = WORK_TARGET_SEC - totalActiveSec
+
     return {
       totalActiveSec,
       totalIdleSec,
       ratio,
       topApp,
       formattedActive: formatDuration(totalActiveSec),
-      formattedIdle: formatDuration(totalIdleSec)
+      formattedIdle: formatDuration(totalIdleSec),
+      workHourProgress,
+      remainingSec
     }
-  }, [filteredSessions, isSelectedToday, now])
+  }, [inspectedSessions, isSelectedToday, now])
 
-  interface ChartBin {
-    time: string
-    Idle: number
-    [app: string]: string | number
-  }
+
 
   // Hourly bin processing for stacked bar chart
   const { chartBins, uniqueApps } = useMemo((): { chartBins: ChartBin[]; uniqueApps: string[] } => {
-    if (filteredSessions.length === 0) return { chartBins: [], uniqueApps: [] }
+    if (inspectedSessions.length === 0) return { chartBins: [], uniqueApps: [] }
 
-    const firstTime = Math.min(...filteredSessions.map((s) => new Date(s.startTime).getTime()))
-    const lastTime = Math.max(...filteredSessions.map((s) => new Date(s.endTime).getTime()))
+    const firstTime = Math.min(...inspectedSessions.map((s) => new Date(s.startTime).getTime()))
+    const lastTime = Math.max(...inspectedSessions.map((s) => new Date(s.endTime).getTime()))
 
     // Truncate start and end times to the start of their respective hours
     const startOfFirstHour = new Date(firstTime)
@@ -371,7 +209,7 @@ function RouteComponent() {
       const activeDurations: Record<string, number> = {}
       let totalActiveMins = 0
 
-      filteredSessions.forEach((s) => {
+      inspectedSessions.forEach((s) => {
         const overlapStart = Math.max(new Date(s.startTime).getTime(), binStart)
         const overlapEnd = Math.min(new Date(s.endTime).getTime(), binEnd)
         if (overlapStart < overlapEnd) {
@@ -403,14 +241,14 @@ function RouteComponent() {
     }
 
     return { chartBins: bins, uniqueApps: Array.from(apps) }
-  }, [filteredSessions, isSelectedToday, now])
+  }, [inspectedSessions, isSelectedToday, now])
 
   // Pie Chart calculations
   const pieChartData = useMemo((): { name: string; value: number; color: string }[] => {
     const data: { name: string; value: number; color: string }[] = []
     const totals: Record<string, number> = {}
 
-    filteredSessions.forEach((s) => {
+    inspectedSessions.forEach((s) => {
       totals[s.software] = (totals[s.software] || 0) + s.duration
     })
 
@@ -431,15 +269,15 @@ function RouteComponent() {
     }
 
     return data
-  }, [filteredSessions, stats.totalIdleSec])
+  }, [inspectedSessions, stats.totalIdleSec])
 
   // Activity log search
-  const displayedLog = useMemo((): TSession[] => {
-    return filteredSessions.filter((s) => {
+  const displayedLog = useMemo((): DetailedSession[] => {
+    return inspectedSessions.filter((s) => {
       const query = searchQuery.toLowerCase()
       return s.software.toLowerCase().includes(query) || s.title.toLowerCase().includes(query)
     })
-  }, [filteredSessions, searchQuery])
+  }, [inspectedSessions, searchQuery])
 
   // const isIdle = idleTime >= IDLE_THRESHOLD
 
@@ -450,115 +288,9 @@ function RouteComponent() {
       </Link>
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Top Header */}
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4  pb-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl tracking-tight">Omhive Activity Center</h1>
-            <p className="text-slate-400 text-sm">
-              Visualizing work sessions, app usage, and desktop idle state.
-            </p>
-          </div>
-
-          <Link
-            to="/admin/monthly-report"
-            title='Monthly Report'
-            className='bg-card rounded-full px-4 py-2 border border-border text-sm cursor-default'>
-            See Monthly Report
-          </Link>
-        </header>
-
+        <Header />
         {/* Stats Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: Active Time */}
-          <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
-            <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                Total Active
-              </p>
-              <h3 className="text-2xl font-bold text-slate-100 tracking-tight mt-1">
-                {stats.formattedActive}
-              </h3>
-            </div>
-          </div>
-
-          {/* Card 2: Idle Time */}
-          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
-            <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.07 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                Total Idle
-              </p>
-              <h3 className="text-2xl font-bold text-slate-100 tracking-tight mt-1">
-                {stats.formattedIdle}
-              </h3>
-            </div>
-          </div>
-
-          {/* Card 3: Active Ratio */}
-          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
-            <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                Active Ratio
-              </p>
-              <h3 className="text-2xl font-bold text-slate-100 tracking-tight mt-1">
-                {stats.ratio}%
-              </h3>
-            </div>
-          </div>
-
-          {/* Card 4: Top Application */}
-          <div className="bg-card backdrop-blur-md border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg  transition duration-300">
-            <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <div className="overflow-hidden min-w-0">
-              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                Top App
-              </p>
-              <h3
-                className="text-lg font-bold text-slate-100 tracking-tight mt-1 truncate"
-                title={stats.topApp}
-              >
-                {stats.topApp}
-              </h3>
-            </div>
-          </div>
-        </section>
+        <StatsGrid stats={stats} />
 
         <UserListwithDetails
           onInspectUser={(userId, date) => {
@@ -577,7 +309,7 @@ function RouteComponent() {
             <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-slate-400 text-sm">Fetching inspected user activities...</p>
           </div>
-        ) : filteredSessions.length === 0 ? (
+        ) : inspectedSessions.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-16 flex flex-col items-center justify-center text-center space-y-4">
             <div className="p-4 bg-card rounded-full text-slate-400">
               <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -592,234 +324,24 @@ function RouteComponent() {
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-slate-300">No Activity Recorded</h3>
               <p className="text-slate-400 text-sm max-w-sm">
-                There are no active desktop tracking sessions stored for the date of{' '}
-                <span className="font-semibold text-indigo-400">
-                  {isInspecting ? inspectedDate : selectedDate}
-                </span>.
+                {isInspecting
+                  ? <>No activity recorded for <span className="font-semibold text-indigo-400">{inspectedDate}</span>.</>
+                  : <>Select a user above to inspect their activity.</>}
               </p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Stacked Bar Chart: Hourly timeline */}
-            <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-200">Hourly Timeline</h3>
-                  <p className="text-slate-400 text-xs mt-0.5">
-                    Distribution of software and idle time per hour.
-                  </p>
-                </div>
-                <span className="text-xs  font-semibold uppercase  border border-border px-2.5 py-1 rounded-full bg-primary text-background">
-                  Values in minutes
-                </span>
-              </div>
-
-              <div className="w-full overflow-x-auto custom-scrollbar pr-1 pb-1">
-                <div className="h-80 min-w-[800px] w-full shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartBins} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-                      <XAxis
-                        dataKey="time"
-                        stroke="#64748B"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        stroke="#64748B"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                        domain={[0, 60]}
-                        ticks={[0, 15, 30, 45, 60]}
-                      />
-                      <Tooltip
-                        content={<CustomTooltip />}
-                        cursor={{ fill: '#1E293B', opacity: 0.3 }}
-                      />
-                      <Legend
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ fontSize: 11, paddingTop: 15 }}
-                      />
-                      {/* Unique Apps stacked */}
-                      {uniqueApps.map((app, idx) => (
-                        <Bar
-                          key={app}
-                          dataKey={app}
-                          stackId="a"
-                          fill={getAppColor(app, idx)}
-                          radius={[0, 0, 0, 0]}
-                        />
-                      ))}
-                      {/* Idle stacked */}
-                      <Bar dataKey="Idle" stackId="a" fill="#334155" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Pie Chart: App Usage Distribution */}
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-200">App Distribution</h3>
-                <p className="text-slate-400 text-xs mt-0.5">
-                  Proportional breakdown of total logged time.
-                </p>
-              </div>
-
-              <div className="h-60 w-full relative flex items-center justify-center shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieChartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={65}
-                      outerRadius={85}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {pieChartData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                          stroke="#090D16"
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomPieTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                {/* Center text indicating focus percentage */}
-                <div className="absolute flex flex-col items-center text-center">
-                  <span className="text-2xl font-black text-slate-100">{stats.ratio}%</span>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
-                    Active
-                  </span>
-                </div>
-              </div>
-
-              {/* List of top colors/shares */}
-              <div className="space-y-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-                {pieChartData.map((entry, index) => (
-                  <div key={index} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: entry.color }}
-                      />
-                      <span className="text-slate-300 truncate max-w-[150px]">{entry.name}</span>
-                    </div>
-                    <span className="text-slate-400 font-bold">{entry.value}m</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <HourlyTimeline
+            chartBins={chartBins}
+            uniqueApps={uniqueApps}
+            pieChartData={pieChartData}
+            stats={stats}
+          />
         )}
 
         {/* Detailed Session Logs */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">Chronological Activity Log</h3>
-            <p className="text-slate-400 text-xs mt-0.5">
-              Detailed window transition events for the day.
-            </p>
-          </div>
-
-          {/* Search Input */}
-          <div className="relative max-w-sm w-full">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search app or window title..."
-              className="w-full bg-card border border-border text-foreground text-sm px-4 py-2 pl-10 rounded-full focus:outline-none  placeholder-foreground/50 transition"
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-foreground">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <section className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-4">
-
-
-          <div className="border border-border rounded-xl overflow-hidden bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-card text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Time Window</th>
-                    <th className="py-3.5 px-4">Application</th>
-                    <th className="py-3.5 px-4">Window Title</th>
-                    <th className="py-3.5 px-4 text-right">Duration</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/50 text-xs text-slate-300">
-                  {displayedLog.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-slate-500 font-medium">
-                        No matching sessions found.
-                      </td>
-                    </tr>
-                  ) : (
-                    displayedLog.map((session, idx) => {
-                      const startTimeStr = new Date(session.startTime).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                      })
-                      const endTimeStr = new Date(session.endTime).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                      })
-
-                      const min = Math.floor(session.duration / 60)
-                      const sec = Math.round(session.duration % 60)
-                      const durStr = min > 0 ? `${min}m ${sec}s` : `${sec}s`
-
-                      return (
-                        <tr key={idx} className="hover:bg-slate-900/20 transition duration-150">
-                          <td className="py-3.5 px-4 font-mono text-slate-400">
-                            {startTimeStr} - {endTimeStr}
-                          </td>
-                          <td className="py-3.5 px-4 font-semibold text-indigo-300">
-                            {session.software}
-                          </td>
-                          <td
-                            className="py-3.5 px-4 truncate max-w-xs sm:max-w-md md:max-w-lg"
-                            title={session.title}
-                          >
-                            {session.title || (
-                              <span className="text-slate-600 italic">No Title</span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-bold text-slate-200">
-                            {durStr}
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        <DetailedSessionHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <DetailedLogTable displayedLog={displayedLog} />
       </div>
 
     </div>
