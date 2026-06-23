@@ -3,6 +3,7 @@ import os from 'os'
 import { API_ENDPOINT } from '../constants'
 import { AppState, StoreType } from '../types'
 import type ElectronStore from 'electron-store'
+import { getLocalDate } from '../utils'
 
 const HOSTNAME = os.hostname()
 const USERNAME = os.userInfo().username
@@ -174,7 +175,7 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
   ipcMain.handle('user:with-login-logout', async (_, payload: { date: string }) => {
     try {
       console.log("user:with-login-logout payload", payload)
-      const today = payload.date || new Date().toISOString().split('T')[0]
+      const today = payload.date || getLocalDate()
       const response = await fetch(API_ENDPOINT + `/user/with-login-logout/${today}`, {
         method: 'GET',
         headers: {
