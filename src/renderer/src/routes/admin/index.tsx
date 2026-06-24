@@ -9,6 +9,7 @@ import { getAppColor } from '@renderer/features/admin/utils'
 import { ChartBin, DetailedSession } from '@renderer/features/admin/types'
 import DetailedSessionHeader from '@renderer/features/admin/components/DetailedSessionHeader'
 import DetailedLogTable from '@renderer/features/admin/components/detailedLogTable'
+import DailyAttendance from '@renderer/features/admin/components/DailyAttendance'
 
 
 
@@ -282,66 +283,70 @@ function RouteComponent() {
   // const isIdle = idleTime >= IDLE_THRESHOLD
 
   return (
-    <div className="min-h-screen bg-background  text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none">
-      <Link to="/" >
-        back
-      </Link>
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Top Header */}
-        <Header />
-        {/* Stats Grid */}
-        <StatsGrid stats={stats} />
+    <div className="h-screen overflow-hidden   bg-background  text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none ">
+      <div  className="relative z-10 h-full max-w-7xl mx-auto px-6 py-8 overflow-y-auto hide-scroll" >
 
-        <UserListwithDetails
+        <Link to="/" >
+          back
+        </Link>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
+          {/* Top Header */}
+          <Header />
+          {/* Stats Grid */}
+          {/* <StatsGrid stats={stats} /> */}
+
+          {/* <UserListwithDetails
           onInspectUser={(userId, date) => {
             const userObj = users.find((u) => u.id === userId) || null
             setInspectedUser(userObj)
             setInspectedDate(date)
             if (userObj) {
               loadInspectedSessions(userId, date)
-            }
-          }}
-        />
+              }
+              }}
+              /> */}
+          <DailyAttendance />
 
-        {/* Charts Section */}
-        {loadingInspection ? (
-          <div className="bg-card border border-border rounded-2xl p-24 flex flex-col items-center justify-center text-center space-y-4 animate-fade-in">
-            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-400 text-sm">Fetching inspected user activities...</p>
-          </div>
-        ) : inspectedSessions.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl p-16 flex flex-col items-center justify-center text-center space-y-4">
-            <div className="p-4 bg-card rounded-full text-slate-400">
-              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+          {/* Charts Section */}
+          {loadingInspection ? (
+            <div className="bg-card border border-border rounded-2xl p-24 flex flex-col items-center justify-center text-center space-y-4 animate-fade-in">
+              <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-slate-400 text-sm">Fetching inspected user activities...</p>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-slate-300">No Activity Recorded</h3>
-              <p className="text-slate-400 text-sm max-w-sm">
-                {isInspecting
-                  ? <>No activity recorded for <span className="font-semibold text-indigo-400">{inspectedDate}</span>.</>
-                  : <>Select a user above to inspect their activity.</>}
-              </p>
+          ) : inspectedSessions.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-16 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="p-4 bg-card rounded-full text-slate-400">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-slate-300">No Activity Recorded</h3>
+                <p className="text-slate-400 text-sm max-w-sm">
+                  {isInspecting
+                    ? <>No activity recorded for <span className="font-semibold text-indigo-400">{inspectedDate}</span>.</>
+                    : <>Select a user above to inspect their activity.</>}
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <HourlyTimeline
-            chartBins={chartBins}
-            uniqueApps={uniqueApps}
-            pieChartData={pieChartData}
-            stats={stats}
-          />
-        )}
+          ) : (
+            <HourlyTimeline
+              chartBins={chartBins}
+              uniqueApps={uniqueApps}
+              pieChartData={pieChartData}
+              stats={stats}
+            />
+          )}
 
-        {/* Detailed Session Logs */}
-        <DetailedSessionHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        <DetailedLogTable displayedLog={displayedLog} />
+          {/* Detailed Session Logs */}
+          <DetailedSessionHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <DetailedLogTable displayedLog={displayedLog} />
+        </div>
       </div>
 
     </div>

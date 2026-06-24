@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { DailyAttendanceResponse } from 'src/shared/types'
 
 
 export type Attendance = {
@@ -65,6 +66,8 @@ export interface MonthAttendanceResponse {
 
 
 
+
+
 interface Api {
   onIdleTime: (callback: (idleTime: number) => void) => void
   removeIdleTimeListener: () => void
@@ -92,6 +95,7 @@ interface Api {
   listUserWithLoginLogout: (payload: { date: string }) => Promise<
     UsersWithLoginLogout
   >
+  dailyAttendance: (payload: { date: string }) => Promise<DailyAttendanceResponse>
   getUserMonthlyReport: (payload: { month: number, year: number, userId: string }) => Promise<MonthAttendanceResponse>
   loginUser: (payload: { username: string }) => Promise<{
     data: {
@@ -100,7 +104,7 @@ interface Api {
       attendanceId: string
       existing: boolean
       loginTime: Date
-      status: "working" | "break" 
+      status: "working" | "break"
     } | null
     success: boolean
     isAdmin?: boolean
@@ -110,7 +114,7 @@ interface Api {
     data: {
       breakId: string
       startTime: Date
-      status: "working" | "break" 
+      status: "working" | "break"
 
     } | null
     success: boolean
@@ -120,7 +124,7 @@ interface Api {
     data: {
       durationSeconds: number
       resumedAt: Date
-      status: "working" | "break" 
+      status: "working" | "break"
 
     }
     success: boolean

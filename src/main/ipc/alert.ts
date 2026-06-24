@@ -7,7 +7,7 @@ type AlertPayload = {
 }
 
 export const AlertIpc = () => {
-  ipcMain.handle('system:alert', async (_, payload: AlertPayload) => {
+  ipcMain.handle  ('system:alert', async (_, payload: AlertPayload) => {
     const win = BrowserWindow.getFocusedWindow()
 
     return dialog.showMessageBox(win!, {

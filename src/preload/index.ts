@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { DailyAttendanceResponse } from '../shared/types'
 
 // Custom APIs for renderer
 const api = {
@@ -22,6 +23,7 @@ const api = {
   getSystemInfo: () => ipcRenderer.invoke('user:get-info'),
   listUser: () => ipcRenderer.invoke('user:list'),
   listUserWithLoginLogout: (payload: { date: string }) => ipcRenderer.invoke('user:with-login-logout', payload),
+  dailyAttendance: (payload: { date: string }): Promise<DailyAttendanceResponse> => ipcRenderer.invoke('attendance:daily-attendance', payload),
   getUserMonthlyReport: (payload: { month: number, year: number, userId: string }) => ipcRenderer.invoke('user:attendance', payload),
   loginUser: (payload: {
     username: string

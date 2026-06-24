@@ -3,6 +3,7 @@ import { UserIpc } from './user'
 import { AppState, StoreType } from '../types'
 import { ActivityIpc } from './activity'
 import type ElectronStore from 'electron-store'
+import { AttendanceIpc } from './attendance'
 
 export function IPC_Handlers({
   store,
@@ -13,5 +14,6 @@ export function IPC_Handlers({
 }) {
   UserIpc({ store, appState })
   ActivityIpc()
+  AttendanceIpc()
   AlertIpc()
 }

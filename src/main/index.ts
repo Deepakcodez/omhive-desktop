@@ -13,7 +13,7 @@ import {
 } from './constants'
 import type { StoreType, TSession, } from './types'
 import { IPC_Handlers } from './ipc'
-import { isLoggedIn, syncToServer } from './utils'
+import { isLoggedIn, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
 
 
@@ -26,6 +26,7 @@ const USERNAME = os.userInfo().username
 let currentSession: TSession | null = null
 let pendingSessions: TSession[] = []
 let mainWindow: BrowserWindow | null = null
+let idleStartedAt: number | null = null
 const appState = {
   trackingEnabled: false,
   currentUserId: '',
@@ -165,12 +166,58 @@ app.whenReady().then(async () => {
     // Send live idle time to renderer
     mainWindow?.webContents.send('idle-time', idleTime)
 
+    // stop idle time
+    if (
+      idleStartedAt &&
+      idleTime < IDLE_THRESHOLD_SEC
+    ) {
+      const endTime = Date.now()
+
+      console.log(
+        "User returned from idle:",
+        (endTime - idleStartedAt) / 1000,
+        "seconds"
+      )
+
+      try {
+        console.log("will stop idle session here")
+
+        await stopIdleSession({
+          attendanceId: appState.attendanceId,
+          endTime: new Date(endTime).toISOString()
+        })
+
+        idleStartedAt = null
+      } catch (error) {
+        console.error("Failed to stop idle session", error)
+      }
+    }
+
+    // start idle time
     if (idleTime >= IDLE_THRESHOLD_SEC) {
       console.log("user is idea for", idleTime + " sec")
       // User went idle — close any open session
+
+      if (!idleStartedAt) {
+        idleStartedAt = Date.now()
+
+        console.log(
+          "User became idle at",
+          new Date(idleStartedAt)
+        )
+        console.log("will send ideal session to server here")
+        await startIdleSession({
+          attendanceId: appState.attendanceId,
+          userId: appState.currentUserId,
+          startTime: new Date(idleStartedAt).toISOString()
+        })
+      }
+
+
       const closed = closeCurrentSession()
       if (closed) {
         pendingSessions.push(closed)
+        store.delete('currentSession')
         pushToRenderer(closed)
       }
 

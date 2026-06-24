@@ -62,3 +62,49 @@ export const isLoggedIn = async (
     }
   }
 }
+
+
+export const startIdleSession = async ({
+  attendanceId,
+  userId,
+  startTime
+}: {
+  attendanceId: string,
+  userId: string,
+  startTime: string
+}) => {
+  try {
+    const res = await fetch(`${API_ENDPOINT}/activity/start-idle-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attendanceId, userId, startTime })
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    console.log(`[sync] Idle session set`)
+  } catch (err) {
+    console.error('[sync] Failed to set idle session:', err)
+    throw new Error(`HTTP error! ${err}`)
+  }
+
+}
+export const stopIdleSession = async ({
+  attendanceId,
+  endTime
+}: {
+  attendanceId: string,
+  endTime: string
+}) => {
+  try {
+    const res = await fetch(`${API_ENDPOINT}/activity/stop-idle-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attendanceId, endTime })
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    console.log(`[sync] Idle session set`)
+  } catch (err) {
+    console.error('[sync] Failed to set idle session:', err)
+    throw new Error(`HTTP error! ${err}`)
+  }
+
+}
