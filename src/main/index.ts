@@ -27,6 +27,7 @@ let currentSession: TSession | null = null
 let pendingSessions: TSession[] = []
 let mainWindow: BrowserWindow | null = null
 let idleStartedAt: number | null = null
+let askingClose = false
 const appState = {
   trackingEnabled: false,
   currentUserId: '',
@@ -86,9 +87,25 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => mainWindow!.show())
 
+  mainWindow.on('close', async (e) => {
+    if (!askingClose) {
+      e.preventDefault()
+      askingClose = true
+      mainWindow?.webContents.send('app:before-close')
+    }
+  })
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  ipcMain.on('app:close-cancelled', () => {
+    askingClose = false
+  })
+
+  ipcMain.on('app:close', () => {
+    app.quit()
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -331,6 +348,8 @@ app.whenReady().then(async () => {
   })
 })
 
+
+
 // Flush any open session before quitting
 app.on('before-quit', () => {
   const closed = closeCurrentSession()
@@ -339,4 +358,5 @@ app.on('before-quit', () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+
 })

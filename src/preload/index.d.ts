@@ -170,6 +170,9 @@ interface Api {
     message: string
     type?: 'info' | 'warning' | 'error'
   }) => Promise<void>
+  onBeforeClose: (callback: () => void) => void
+  closeCancelled: () => void
+  closeApp: () => void
 }
 
 declare global {

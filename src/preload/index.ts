@@ -40,7 +40,16 @@ const api = {
     ipcRenderer.invoke('activity:track', payload),
 
   alert: (payload: { title: string; message: string; type?: 'info' | 'warning' | 'error' }) =>
-    ipcRenderer.invoke('system:alert', payload)
+    ipcRenderer.invoke('system:alert', payload),
+  onBeforeClose: (callback: () => void) => {
+    ipcRenderer.on('app:before-close', callback)
+  },
+  closeCancelled: () => {
+    ipcRenderer.send('app:close-cancelled')
+  },
+  closeApp: () => {
+    ipcRenderer.send('app:close')
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
