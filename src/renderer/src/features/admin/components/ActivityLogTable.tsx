@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDailyActivitiesStore } from "../store";
-import ActivityLogHeader from "./ActivityLogHeader";
 import { ChevronLeft, ChevronRight, } from "lucide-react";
 import { DetailedSession } from "../types";
 
@@ -9,7 +8,7 @@ const limitsRange = [20, 50, 100, 150, 200]
 
 
 export default function ActivityLogTable() {
-    const { selectedDate, selectedUserId, activityLog, setActivityLog, searchQuery, setSearchQuery } = useDailyActivitiesStore()
+    const { selectedDate, selectedUserId, activityLog, setActivityLog, searchQuery, setSearchQuery, selectedAttendanceId } = useDailyActivitiesStore()
     const [page, setPage] = useState(1)
     const [limit, setLimit] = useState(50)
     const [total, setTotal] = useState(0)
@@ -32,11 +31,12 @@ export default function ActivityLogTable() {
             const response = await window.api.getUserActivity({
                 userId: selectedUserId,
                 date: selectedDate,
-                attendanceId: "",
+                attendanceId: selectedAttendanceId,
                 page,
                 limit
             })
 
+            console.log("activity--->>>", response)
             setActivityLog(response.data?.data || [])
             setTotal(response.data?.total || 0)
         } finally {
@@ -59,7 +59,7 @@ export default function ActivityLogTable() {
     }, [selectedDate, selectedUserId])
     useEffect(() => {
         fetchActivities()
-    }, [selectedDate, selectedUserId, page, limit])
+    }, [selectedDate, selectedUserId, page, limit, selectedAttendanceId])
 
     const displayedLog = useMemo((): DetailedSession[] => {
         return activityLog.filter((s) => {

@@ -15,7 +15,10 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       hostname: HOSTNAME,
       os: os.platform(),
       systemUsername: USERNAME,
-      startTime: new Date().toISOString()
+      startTime: new Date().toISOString(),
+      timezone: Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone
     }
     try {
       const response = await fetch(API_ENDPOINT + '/user/login', {
@@ -37,7 +40,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
         attendanceId: data.data.attendanceId
       })
 
-    
+
       updateAppState(store, {
         trackingEnabled: true,
         currentUserId: data.data.userId,

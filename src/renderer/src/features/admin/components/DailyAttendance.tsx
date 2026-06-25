@@ -1,4 +1,4 @@
-import { Activity, Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { Activity,  useEffect, useState } from 'react'
 import type { TUserAttendance } from '@shared/types'
 import {
     Calendar,
@@ -39,7 +39,7 @@ function formatTime(date: string | null) {
 
 
 export default function DailyAttendance() {
-    const { selectedDate, setSelectedDate, setSelectedUserId } = useDailyActivitiesStore()
+    const { selectedDate, setSelectedDate, setSelectedUserId, setSelectedAttendanceId } = useDailyActivitiesStore()
     const [attendance, setAttendance] = useState<TUserAttendance[]>([])
     const [loading, setLoading] = useState(false)
     const [expanded, setExpanded] = useState<string | null>(null)
@@ -109,10 +109,11 @@ export default function DailyAttendance() {
                             className="overflow-hidden rounded-xl border border-border bg-card"
                         >
                             <button
+                                title={`Click to get activities of @${user.userName}`}
                                 onClick={() => {
-                                    console.log("user clicked", user.userId, selectedDate)
                                     setExpanded(open ? null : user.userId)
                                     setSelectedUserId(user.userId)
+                                    setSelectedAttendanceId('')
                                 }}
                                 className="flex w-full items-center gap-4 p-3 "
                             >
@@ -195,9 +196,11 @@ export default function DailyAttendance() {
                                 <div className="border-t border-t-border p-3">
                                     <div className="space-y-2">
                                         {user.sessions.map((session) => (
-                                            <div
+                                            <button
                                                 key={session.attendanceId}
-                                                className="flex items-center justify-between rounded-full border border-dashed border-primary/30 px-4 py-2 text-sm bg-muted/5"
+                                                title='click to get activities of that session'
+                                                onClick={() => setSelectedAttendanceId(session.attendanceId)}
+                                                className="w-full  flex items-center justify-between rounded-full border border-dashed border-primary/30 px-4 py-2 text-sm bg-muted/5"
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <span className="font-medium">
@@ -252,7 +255,7 @@ export default function DailyAttendance() {
                                                         )}
                                                     </span>
                                                 </div>
-                                            </div>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>

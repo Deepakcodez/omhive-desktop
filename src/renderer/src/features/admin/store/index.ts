@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { DetailedSession } from '../types'
+import { getLocalDate } from '@renderer/lib/utils'
 
 type Store = {
     selectedDate: string
@@ -10,11 +11,13 @@ type Store = {
     setActivityLog: (activityLog: DetailedSession[]) => void
     searchQuery: string
     setSearchQuery: (searchQuery: string) => void
-    
+    selectedAttendanceId: string
+    setSelectedAttendanceId: (id: string) => void
+
 }
 
 export const useDailyActivitiesStore = create<Store>()((set) => ({
-    selectedDate: new Date().toISOString().split('T')[0],
+    selectedDate: getLocalDate(),
     setSelectedDate: (date: string) => set(({ selectedDate: date })),
 
     selectedUserId: "",
@@ -26,4 +29,6 @@ export const useDailyActivitiesStore = create<Store>()((set) => ({
     searchQuery: '',
     setSearchQuery: (searchQuery: string) => set(({ searchQuery: searchQuery })),
 
+    selectedAttendanceId: '',
+    setSelectedAttendanceId: (id: string) => set(({ selectedAttendanceId: id }))
 }))
