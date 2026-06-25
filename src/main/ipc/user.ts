@@ -1,14 +1,14 @@
 import { ipcMain } from 'electron'
 import os from 'os'
 import { API_ENDPOINT } from '../constants'
-import { AppState, StoreType } from '../types'
+import { StoreType } from '../types'
 import type ElectronStore from 'electron-store'
-import { getLocalDate } from '../utils'
+import { getLocalDate, updateAppState } from '../utils'
 
 const HOSTNAME = os.hostname()
 const USERNAME = os.userInfo().username
 
-export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; appState: AppState }) {
+export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
   ipcMain.handle('user:login', async (_, payload: { username: string }) => {
     const bodyData = {
       userName: payload.username,
@@ -36,9 +36,13 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
         userName: data.data.username,
         attendanceId: data.data.attendanceId
       })
-      appState.trackingEnabled = true
-      appState.currentUserId = data.data.userId
-      appState.attendanceId = data.data.attendanceId
+
+    
+      updateAppState(store, {
+        trackingEnabled: true,
+        currentUserId: data.data.userId,
+        attendanceId: data.data.attendanceId
+      })
       return {
         data: data.data,
         success: true,
@@ -47,7 +51,12 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
       }
     } catch (error) {
       console.error('Error logging in user:', error)
-      appState.trackingEnabled = false
+
+      updateAppState(store, {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: ''
+      })
       return {
         data: null,
         success: false,
@@ -67,12 +76,18 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
       const data = await response.json()
       console.log(data)
       if (data.success) {
-        appState.trackingEnabled = false
+
+
+        updateAppState(store, {
+          trackingEnabled: false
+        })
       }
       return data
     } catch (error) {
       console.error('Error in taking break:', error)
-      appState.trackingEnabled = false
+      updateAppState(store, {
+        trackingEnabled: false
+      })
       return {
         data: null,
         success: false,
@@ -81,6 +96,7 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
     }
   })
   ipcMain.handle('user:resume', async (_, payload: { attendanceId: string }) => {
+    console.log('resuming user payload', payload)
     try {
       const response = await fetch(API_ENDPOINT + '/user/resume', {
         method: 'POST',
@@ -90,15 +106,21 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
         body: JSON.stringify(payload)
       })
 
+      console.log('resuming user response', response)
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
-      appState.trackingEnabled = true
+      updateAppState(store, {
+        trackingEnabled: true
+      })
       return data
     } catch (error) {
       console.error('Error  in resuming user:', error)
-      appState.trackingEnabled = false
+      updateAppState(store, {
+        trackingEnabled: false
+      })
       return {
         data: null,
         success: false,
@@ -120,11 +142,20 @@ export function UserIpc({ store, appState }: { store: ElectronStore<StoreType>; 
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const { data } = await response.json()
-      appState.trackingEnabled = false
+
+      updateAppState(store, {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: ''
+      })
       return data
     } catch (error) {
       console.error('Error  in resuming user:', error)
-      appState.trackingEnabled = false
+      updateAppState(store, {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: ''
+      })
       return null
     }
   })

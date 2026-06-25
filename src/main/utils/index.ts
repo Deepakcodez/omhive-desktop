@@ -1,11 +1,25 @@
+import ElectronStore from 'electron-store'
 import { API_ENDPOINT } from '../constants'
-import { TSession } from '../types'
+import type { AppState, StoreType, TSession } from '../types'
 
 
 export function getLocalDate(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata'
   }).format(date)
+}
+
+
+export function updateAppState(
+  store: ElectronStore<StoreType>,
+  updates: Partial<AppState>
+) {
+  const current = store.get('appState')
+
+  store.set('appState', {
+    ...current,
+    ...updates
+  })
 }
 
 

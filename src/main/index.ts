@@ -28,11 +28,6 @@ let pendingSessions: TSession[] = []
 let mainWindow: BrowserWindow | null = null
 let idleStartedAt: number | null = null
 let askingClose = false
-const appState = {
-  trackingEnabled: false,
-  currentUserId: '',
-  attendanceId: ''
-}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 // not current session  return null
@@ -126,6 +121,11 @@ app.whenReady().then(async () => {
         userName: '',
         attendanceId: ''
       },
+      appState: {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: ''
+      },
       sessions: []
     }
   })
@@ -139,10 +139,14 @@ app.whenReady().then(async () => {
     try {
       const session = await isLoggedIn(userInfo.userId)
       if (session?.loggedIn) {
-        appState.trackingEnabled = true
-        appState.currentUserId = userInfo.userId
-        appState.attendanceId = session.attendanceId || userInfo.attendanceId
+
+        store.set('appState', {
+          trackingEnabled: session.status === 'working',
+          currentUserId: userInfo.userId,
+          attendanceId: session.attendanceId || userInfo.attendanceId
+        })
       }
+      const appState = store.get('appState')
       console.log("app state", appState)
       console.log('Creating session', {
         userId: appState.currentUserId,
@@ -165,12 +169,13 @@ app.whenReady().then(async () => {
     sessions: store ? store.get('sessions', []) : []
   }))
 
-  IPC_Handlers({ store, appState })
+  IPC_Handlers({ store })
 
   createWindow()
 
   // ── Poll: detect active window every second ─────────────────────────────
   setInterval(async () => {
+    const appState = store.get('appState')
     if (!appState.trackingEnabled) return
 
     const idleTime = powerMonitor.getSystemIdleTime()
@@ -200,7 +205,7 @@ app.whenReady().then(async () => {
         console.log("will stop idle session here")
 
         await stopIdleSession({
-          attendanceId: appState.attendanceId,
+          attendanceId: appState.attendanceId || '',
           endTime: new Date(endTime).toISOString()
         })
 
@@ -224,8 +229,8 @@ app.whenReady().then(async () => {
         )
         console.log("will send ideal session to server here")
         await startIdleSession({
-          attendanceId: appState.attendanceId,
-          userId: appState.currentUserId,
+          attendanceId: appState.attendanceId || '',
+          userId: appState.currentUserId || '',
           startTime: new Date(idleStartedAt).toISOString()
         })
       }
@@ -260,8 +265,8 @@ app.whenReady().then(async () => {
         title,
         hostname: HOSTNAME,
         systemUsername: USERNAME,
-        userId: appState.currentUserId,
-        attendanceId: appState.attendanceId
+        userId: appState.currentUserId || '',
+        attendanceId: appState.attendanceId || ''
       }
       return
     }
@@ -291,8 +296,8 @@ app.whenReady().then(async () => {
       title,
       hostname: HOSTNAME,
       systemUsername: USERNAME,
-      userId: appState.currentUserId,
-      attendanceId: appState.attendanceId
+      userId: appState.currentUserId || '',
+      attendanceId: appState.attendanceId || ''
     }
 
     console.log('step-1 pendingstatus first entry', pendingSessions[0])
@@ -300,15 +305,17 @@ app.whenReady().then(async () => {
 
   // save session to the local db if user use same app for a long time
   setInterval(() => {
+    const appState = store.get('appState')
     const snapshot = getCurrentSessionSnapshot()
 
     if (!snapshot || !store) return
-
+    if (!appState.trackingEnabled) return
     store.set('currentSession', snapshot)
   }, 6_000)
 
   // store activity locally after 1 minutes
   setInterval(() => {
+    const appState = store.get('appState')
     if (!appState.trackingEnabled) return
     if (pendingSessions.length === 0) return
 
@@ -333,6 +340,7 @@ app.whenReady().then(async () => {
       payload.push(current)
     }
 
+    console.log('payload ', payload)
     if (payload.length === 0) return
     try {
       await syncToServer(payload)

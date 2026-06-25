@@ -62,6 +62,7 @@ export type StoreType = {
   userInfo: UserInfoType
   sessions: TSession[]
   currentSession?: TSession
+  appState: AppState,
 }
 
 

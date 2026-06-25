@@ -7,12 +7,10 @@ import { AttendanceIpc } from './attendance'
 
 export function IPC_Handlers({
   store,
-  appState
 }: {
   store: ElectronStore<StoreType>
-  appState: AppState
 }) {
-  UserIpc({ store, appState })
+  UserIpc({ store })
   ActivityIpc()
   AttendanceIpc()
   AlertIpc()
