@@ -1,4 +1,4 @@
-import { Activity,  useEffect, useState } from 'react'
+import { Activity, useEffect, useState } from 'react'
 import type { TUserAttendance } from '@shared/types'
 import {
     Calendar,
@@ -10,6 +10,7 @@ import {
 import { cn } from '@renderer/lib/utils'
 import { DatePicker } from './DatePicker'
 import { useDailyActivitiesStore } from '../store'
+import { Link } from '@tanstack/react-router'
 
 const fetchDailyAttendance = async (date: string): Promise<TUserAttendance[]> => {
     const res = await window.api.dailyAttendance({
@@ -75,14 +76,21 @@ export default function DailyAttendance() {
             <div className='flex justify-between items-center'>
                 <h2 className='text-2xl'>Daily Attendance</h2>
                 <div className='flex gap-1 items-center'>
-                    <div className=''>
+                    <Link
+                        to="/admin/monthly-report"
+                        title='Monthly Report'
+                        className='bg-card rounded-full px-4 py-2 border-y border-y-border text-sm cursor-default'>
+                        See Monthly Report
+                    </Link>
+                    <div className='relative'>
+
                         <button
                             onClick={() => setShowCalender(!isShowCalender)}
                             className='p-2 rounded-full bg-card border-y border-y-white/30 active:scale-95 duration-300'>
                             <Calendar size={18} />
                         </button>
                         <Activity mode={isShowCalender ? 'visible' : 'hidden'}>
-                            <div className='absolute mt-2 right-0 shrink-0'>
+                            <div className='absolute z-10 mt-2 -right-8  shrink-0 w-max'>
                                 <DatePicker
                                     selectedDate={selectedDate}
                                     onSelectDate={setSelectedDate}

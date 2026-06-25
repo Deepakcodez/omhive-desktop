@@ -69,8 +69,8 @@ export default function ActivityLogTable() {
     }, [activityLog, searchQuery])
 
     return (
-        <>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                     <h3 className="text-lg font-semibold text-foreground">Chronological Activity Log</h3>
                     <p className="text-slate-400 text-xs mt-0.5">
@@ -236,6 +236,6 @@ export default function ActivityLogTable() {
                     </div>
                 </div>
             </section>
-        </>
+        </div>
     )
 }

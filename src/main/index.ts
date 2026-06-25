@@ -340,11 +340,13 @@ app.whenReady().then(async () => {
       payload.push(current)
     }
 
-    console.log('payload ', payload)
+    console.log('payload bb', payload)
     if (payload.length === 0) return
     try {
       await syncToServer(payload)
       store?.set('sessions', [])
+      // store?.set('currentSession', null)
+      
     } catch (error) {
       console.log('sending to server failed', error)
     }
