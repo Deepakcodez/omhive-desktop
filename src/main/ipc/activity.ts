@@ -2,7 +2,7 @@ import { ipcMain } from "electron"
 import { API_ENDPOINT } from "../constants"
 
 export function ActivityIpc() {
-    ipcMain.handle('activity:track', async (_, payload: { userId: string, attendanceId: string, date: string, limit: number }) => {
+    ipcMain.handle('activity:track', async (_, payload: { userId: string, attendanceId: string, date: string, limit: number, page: number }) => {
         try {
             const limit = payload.limit || 100
             const url = new URL(`${API_ENDPOINT}/activity/date/${payload.date}`)
@@ -12,7 +12,12 @@ export function ActivityIpc() {
             if (payload.attendanceId) {
                 url.searchParams.append('attendanceId', payload.attendanceId)
             }
-            url.searchParams.append('limit', String(limit))
+            if(payload.limit){
+                url.searchParams.append('limit', String(limit))
+            }
+            if(payload.page){
+                url.searchParams.append('page', String(payload.page))
+            }
 
             const response = await fetch(url.toString(), {
                 method: 'GET',

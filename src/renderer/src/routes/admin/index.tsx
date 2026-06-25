@@ -7,9 +7,11 @@ import StatsGrid from '@renderer/features/admin/components/statsGrid'
 import HourlyTimeline from '@renderer/features/admin/components/hourlyTimeline'
 import { getAppColor } from '@renderer/features/admin/utils'
 import { ChartBin, DetailedSession } from '@renderer/features/admin/types'
-import DetailedSessionHeader from '@renderer/features/admin/components/DetailedSessionHeader'
-import DetailedLogTable from '@renderer/features/admin/components/detailedLogTable'
+import DetailedSessionHeader from '@renderer/features/admin/components/ActivityLogHeader'
+import DetailedLogTable from '@renderer/features/admin/components/ActivityLogTable'
 import DailyAttendance from '@renderer/features/admin/components/DailyAttendance'
+import ActivityLogTable from '@renderer/features/admin/components/ActivityLogTable'
+import { useDailyActivitiesStore } from '@renderer/features/admin/store'
 
 
 
@@ -36,7 +38,6 @@ const WORK_TARGET_SEC = 9 * 60 * 60 // 9 hours in seconds
 
 function RouteComponent() {
 
-  const [_selectedDate, _setSelectedDate] = useState<string>(() => new Date().toLocaleDateString())
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [now, setNow] = useState<number>(() => Date.now())
 
@@ -54,28 +55,28 @@ function RouteComponent() {
     return inspectedDate === todayStr
   }, [inspectedDate])
 
-  const loadInspectedSessions = useCallback(async (userId: string, dateStr: string) => {
-    setLoadingInspection(true)
-    try {
-      const response = await window.api.getUserActivity({
-        userId,
-        date: dateStr,
-        attendanceId: '',
-        limit: 100
-      })
-      console.log('inspected sessions detailed session data', response)
-      if (response.success && response.data) {
-        setInspectedSessions(response.data.data)
-      } else {
-        setInspectedSessions([])
-      }
-    } catch (err) {
-      console.error('Error fetching inspected sessions:', err)
-      setInspectedSessions([])
-    } finally {
-      setLoadingInspection(false)
-    }
-  }, [])
+  // const loadInspectedSessions = useCallback(async (userId: string, dateStr: string) => {
+  //   setLoadingInspection(true)
+  //   try {
+  //     const response = await window.api.getUserActivity({
+  //       userId,
+  //       date: dateStr,
+  //       attendanceId: '',
+  //       limit: 100
+  //     })
+  //     console.log('inspected sessions detailed session data', response)
+  //     if (response.success && response.data) {
+  //       setInspectedSessions(response.data.data)
+  //     } else {
+  //       setInspectedSessions([])
+  //     }
+  //   } catch (err) {
+  //     console.error('Error fetching inspected sessions:', err)
+  //     setInspectedSessions([])
+  //   } finally {
+  //     setLoadingInspection(false)
+  //   }
+  // }, [])
 
 
 
@@ -284,7 +285,7 @@ function RouteComponent() {
 
   return (
     <div className="h-screen overflow-hidden   bg-background  text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none ">
-      <div  className="relative z-10 h-full max-w-7xl mx-auto px-6 py-8 overflow-y-auto hide-scroll" >
+      <div className="relative z-10 h-full max-w-7xl mx-auto px-6 py-8 overflow-y-auto hide-scroll" >
 
         <Link to="/" >
           back
@@ -292,20 +293,8 @@ function RouteComponent() {
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
           {/* Top Header */}
           <Header />
-          {/* Stats Grid */}
-          {/* <StatsGrid stats={stats} /> */}
-
-          {/* <UserListwithDetails
-          onInspectUser={(userId, date) => {
-            const userObj = users.find((u) => u.id === userId) || null
-            setInspectedUser(userObj)
-            setInspectedDate(date)
-            if (userObj) {
-              loadInspectedSessions(userId, date)
-              }
-              }}
-              /> */}
           <DailyAttendance />
+
 
           {/* Charts Section */}
           {loadingInspection ? (
@@ -344,8 +333,8 @@ function RouteComponent() {
           )}
 
           {/* Detailed Session Logs */}
-          <DetailedSessionHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-          <DetailedLogTable displayedLog={displayedLog} />
+          <ActivityLogTable
+          />
         </div>
       </div>
 

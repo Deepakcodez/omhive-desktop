@@ -91,7 +91,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
   }, [selectedDate])
 
   return (
-    <div className="flex flex-col space-y-2 w-full bg-card rounded-2xl p-4 shadow-xl">
+    <div className="border-t border-t-white/60 border-b border-b-border flex flex-col space-y-2 w-full bg-linear-to-b from-white/20 to-card backdrop-blur-lg rounded-2xl p-4 shadow-xl ">
       <div className="flex items-center justify-between px-1 pb-2">
         <h4 className="text-sm font-bold text-slate-100">
           {MONTH_NAMES[currentMonth]} {currentYear}
@@ -100,7 +100,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 hover:bg-primary/20  text-slate-400 hover:text-slate-200 rounded-full border border-border transition"
+            className="p-1.5 bg-white/10 cursor-pointer hover:bg-white/20  text-white hover:text-slate-200 rounded-full  transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
@@ -109,7 +109,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onSelectDa
           <button
             type="button"
             onClick={handleNextMonth}
-            className="p-1.5 hover:bg-primary/20  text-slate-400 hover:text-slate-200 rounded-full border border-border transition"
+            className="p-1.5 bg-white/10 cursor-pointer hover:bg-white/20  text-white hover:text-slate-200 rounded-full  transition"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />

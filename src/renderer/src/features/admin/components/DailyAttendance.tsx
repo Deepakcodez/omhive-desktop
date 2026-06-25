@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Activity, Dispatch, SetStateAction, useEffect, useState } from 'react'
 import type { TUserAttendance } from '@shared/types'
 import {
     Calendar,
@@ -8,6 +8,8 @@ import {
     RotateCw
 } from 'lucide-react'
 import { cn } from '@renderer/lib/utils'
+import { DatePicker } from './DatePicker'
+import { useDailyActivitiesStore } from '../store'
 
 const fetchDailyAttendance = async (date: string): Promise<TUserAttendance[]> => {
     const res = await window.api.dailyAttendance({
@@ -33,12 +35,16 @@ function formatTime(date: string | null) {
     })
 }
 
+
+
+
 export default function DailyAttendance() {
+    const { selectedDate, setSelectedDate, setSelectedUserId } = useDailyActivitiesStore()
     const [attendance, setAttendance] = useState<TUserAttendance[]>([])
     const [loading, setLoading] = useState(false)
     const [expanded, setExpanded] = useState<string | null>(null)
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString())
     const [refetch, setRefetch] = useState(false)
+    const [isShowCalender, setShowCalender] = useState(false)
 
     useEffect(() => {
         const load = async () => {
@@ -68,9 +74,21 @@ export default function DailyAttendance() {
             <div className='flex justify-between items-center'>
                 <h2 className='text-2xl'>Daily Attendance</h2>
                 <div className='flex gap-1 items-center'>
-                    <button className='p-2 rounded-full bg-card border border-border active:scale-95 duration-300'>
-                        <Calendar size={18} />
-                    </button>
+                    <div className=''>
+                        <button
+                            onClick={() => setShowCalender(!isShowCalender)}
+                            className='p-2 rounded-full bg-card border border-border active:scale-95 duration-300'>
+                            <Calendar size={18} />
+                        </button>
+                        <Activity mode={isShowCalender ? 'visible' : 'hidden'}>
+                            <div className='absolute mt-2 right-0 shrink-0'>
+                                <DatePicker
+                                    selectedDate={selectedDate}
+                                    onSelectDate={setSelectedDate}
+                                />
+                            </div>
+                        </Activity>
+                    </div>
                     <button
                         title='Refetch Data'
                         onClick={() => setRefetch((prev) => !prev)}
@@ -80,22 +98,22 @@ export default function DailyAttendance() {
                     </button>
                 </div>
             </div>
-            {attendance.map((user) => {
+            {attendance.map((user, i) => {
                 const open = expanded === user.userId
 
                 return (
                     <>
                         <div
-                            key={user.userId}
+                            key={user.userId + i}
                             className="overflow-hidden rounded-xl border border-border bg-card"
                         >
                             <button
-                                onClick={() =>
-                                    setExpanded(
-                                        open ? null : user.userId
-                                    )
-                                }
-                                className="flex w-full items-center gap-4 p-3"
+                                onClick={() => {
+                                    console.log("user clicked", user.userId, selectedDate)
+                                    setExpanded(open ? null : user.userId)
+                                    setSelectedUserId(user.userId)
+                                }}
+                                className="flex w-full items-center gap-4 p-3 "
                             >
                                 <div className="flex w-64 items-center gap-3">
                                     {open ? (

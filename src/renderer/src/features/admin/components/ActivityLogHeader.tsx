@@ -1,12 +1,9 @@
-import { Dispatch, SetStateAction } from "react"
+import { useDailyActivitiesStore } from "../store"
 
 
-type Props = {
-    searchQuery: string
-    setSearchQuery: Dispatch<SetStateAction<string>>
-}
 
-export default function DetailedSessionHeader({ searchQuery, setSearchQuery }: Props) {
+export default function ActivityLogHeader() {
+    const { searchQuery, setSearchQuery } = useDailyActivitiesStore()
     return (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
