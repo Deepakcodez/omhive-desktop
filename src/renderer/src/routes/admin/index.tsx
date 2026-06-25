@@ -298,7 +298,7 @@ function RouteComponent() {
 
           {/* Charts Section */}
           {loadingInspection ? (
-            <div className="bg-card border border-border rounded-2xl p-24 flex flex-col items-center justify-center text-center space-y-4 animate-fade-in">
+            <div className="bg-card border-y border-y-border rounded-2xl p-24 flex flex-col items-center justify-center text-center space-y-4 animate-fade-in">
               <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-slate-400 text-sm">Fetching inspected user activities...</p>
             </div>

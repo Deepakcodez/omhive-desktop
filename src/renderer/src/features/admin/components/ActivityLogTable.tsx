@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, } from "lucide-react";
 import { DetailedSession } from "../types";
 
 
-const limitsRange = [50, 100, 150, 200]
+const limitsRange = [20, 50, 100, 150, 200]
 
 
 export default function ActivityLogTable() {

@@ -15,7 +15,7 @@ export default function Header({ }: Props) {
             <Link
                 to="/admin/monthly-report"
                 title='Monthly Report'
-                className='bg-card rounded-full px-4 py-2 border border-border text-sm cursor-default'>
+                className='bg-card rounded-full px-4 py-2 border-y border-y-border text-sm cursor-default'>
                 See Monthly Report
             </Link>
         </header>

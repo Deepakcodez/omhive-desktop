@@ -52,6 +52,7 @@ export default function DailyAttendance() {
 
             try {
                 const data = await fetchDailyAttendance(selectedDate)
+                console.log(data)
                 setAttendance(data)
             } finally {
                 setLoading(false)
@@ -77,7 +78,7 @@ export default function DailyAttendance() {
                     <div className=''>
                         <button
                             onClick={() => setShowCalender(!isShowCalender)}
-                            className='p-2 rounded-full bg-card border border-border active:scale-95 duration-300'>
+                            className='p-2 rounded-full bg-card border-y border-y-white/30 active:scale-95 duration-300'>
                             <Calendar size={18} />
                         </button>
                         <Activity mode={isShowCalender ? 'visible' : 'hidden'}>
@@ -92,7 +93,7 @@ export default function DailyAttendance() {
                     <button
                         title='Refetch Data'
                         onClick={() => setRefetch((prev) => !prev)}
-                        className='group p-2 rounded-full bg-card border border-border active:scale-95 duration-300'
+                        className='group p-2 rounded-full bg-card border-y border-y-white/30 active:scale-95 duration-300'
                     >
                         <RotateCw size={18} className='group-active:animate-spin' />
                     </button>
@@ -116,23 +117,31 @@ export default function DailyAttendance() {
                                 className="flex w-full items-center gap-4 p-3 "
                             >
                                 <div className="flex w-64 items-center gap-3">
-                                    {open ? (
-                                        <ChevronDown size={16} />
-                                    ) : (
-                                        <ChevronRight size={16} />
-                                    )}
+                                    {
+                                        open ? (
+                                            <ChevronDown size={16} />
+                                        ) : (
+                                            <ChevronRight size={16} />
+                                        )}
 
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                                        {user.fullName[0]}
+                                    <div className={cn("flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary",)}>
+                                        <div className={cn('absolute h-8 w-8 rounded-full ',
+                                            user.sessions.length > 0 && user?.sessions[0]?.status === 'working' && 'animate-ping bg-primary')} />
+                                        {user.fullName[0].toUpperCase()}
                                     </div>
 
-                                    <div className="text-left">
+                                    <div className="text-left relative pe-4  ">
                                         <div className="font-medium leading-none">
                                             {user.fullName}
                                         </div>
 
                                         <div className="text-xs text-muted-foreground">
                                             @{user.userName}
+                                        </div>
+                                        <div className={cn('absolute  top-0 -right-12 px-2 rounded-full text-xs ', user.sessions.length == 0 ? 'bg-red-600/40' : 'bg-green-600/40')}>
+                                            <p className='text-neutral-200'>
+                                                {user.sessions.length === 0 ? 'Absent' : 'Present'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
