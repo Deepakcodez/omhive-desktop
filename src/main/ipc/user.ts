@@ -67,6 +67,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       }
     }
   })
+
   ipcMain.handle('user:break', async (_, payload: { attendanceId: string }) => {
     try {
       const response = await fetch(API_ENDPOINT + '/user/break', {

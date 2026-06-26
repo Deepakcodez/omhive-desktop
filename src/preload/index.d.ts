@@ -174,6 +174,9 @@ interface Api {
   onBeforeClose: (callback: () => void) => void
   closeCancelled: () => void
   closeApp: () => void
+  isLoggedIn: () => {
+    loggedIn: false
+  }
 }
 
 declare global {

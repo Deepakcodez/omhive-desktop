@@ -173,8 +173,8 @@ export default function HourlyTimeline() {
               )
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col">
+        <div className="grid grid-cols-2 gap-6">
+            <div className=" bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-semibold text-slate-200">

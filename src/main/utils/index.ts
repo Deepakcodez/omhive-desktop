@@ -41,23 +41,23 @@ export async function syncToServer(sessions: TSession[]): Promise<void> {
 }
 
 export const isLoggedIn = async (
-  userId: string
+  userId: string,
 ): Promise<
-  | {
-    loggedIn: boolean
-    attendanceId: string
-    loginTime: Date
-    status: 'working' | 'break' | 'logged_out'
-  }
-  | {
-    loggedIn: boolean
-    attendanceId: null
-    loginTime: null
-    status: null
-  }
-> => {
+    | {
+      loggedIn: boolean
+      attendanceId: string
+      loginTime: Date
+      status: 'working' | 'break' | 'logged_out'
+    }
+    | {
+      loggedIn: boolean
+      attendanceId: null
+      loginTime: null
+      status: null
+    }
+  > => {
   try {
-    const date = new Date().toISOString().split('T')[0]
+    const date = new Date().toISOString()
     const res = await fetch(`${API_ENDPOINT}/user/is-logged-in`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -121,4 +121,30 @@ export const stopIdleSession = async ({
     throw new Error(`HTTP error! ${err}`)
   }
 
+}
+
+export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
+
+  setInterval(async () => {
+    const appState = store.get("appState")
+    console.log("checking heartbeat")
+    if (!appState.trackingEnabled) return
+
+    try {
+      const resp = await fetch(`${API_ENDPOINT}/attendance/heartbeat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          attendanceId: appState.attendanceId,
+          time: new Date().toISOString()
+        })
+      })
+      const response = await resp.json()
+      console.log(response)
+    } catch (error) {
+      console.log("heartbeat error -> ", error)
+    }
+  }, 10_000)
 }

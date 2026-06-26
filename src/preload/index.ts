@@ -49,7 +49,8 @@ const api = {
   },
   closeApp: () => {
     ipcRenderer.send('app:close')
-  }
+  },
+  isLoggedIn: () => ipcRenderer.invoke('auth:status')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

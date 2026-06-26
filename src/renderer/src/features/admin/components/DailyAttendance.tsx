@@ -134,7 +134,7 @@ export default function DailyAttendance() {
                                         )}
 
                                     <div className={cn("flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary",)}>
-                                        <div className={cn('absolute h-8 w-8 rounded-full ',
+                                        <div className={cn('absolute h-4 w-4 rounded-full ',
                                             user.sessions.length > 0 && user?.sessions[0]?.status === 'working' && 'animate-ping bg-primary')} />
                                         {user.fullName[0].toUpperCase()}
                                     </div>

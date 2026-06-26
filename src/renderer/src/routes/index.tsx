@@ -26,6 +26,19 @@ function RouteComponent() {
     return () => clearInterval(timer)
   }, [])
 
+
+  useEffect(() => {
+    const init = async () => {
+      const auth = await window.api.isLoggedIn()
+
+      if (!auth.loggedIn) {
+        localStorage.removeItem('status')
+        localStorage.removeItem('attendanceId')
+      }
+    }
+
+    init()
+  }, [])
   useEffect(() => {
     const status = localStorage.getItem('status')
     const userId = localStorage.getItem('userId')

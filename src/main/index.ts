@@ -13,7 +13,7 @@ import {
 } from './constants'
 import type { StoreType, TSession, } from './types'
 import { IPC_Handlers } from './ipc'
-import { isLoggedIn, startIdleSession, stopIdleSession, syncToServer } from './utils'
+import { isLoggedIn, sendHeartBeat, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
 
 
@@ -145,6 +145,25 @@ app.whenReady().then(async () => {
           currentUserId: userInfo.userId,
           attendanceId: session.attendanceId || userInfo.attendanceId
         })
+      }
+      else {
+        store.set('appState', {
+          trackingEnabled: false,
+          currentUserId: '',
+          attendanceId: ''
+        })
+        store.set('userInfo', {
+          ...userInfo,
+          attendanceId: ''
+        })
+
+        ipcMain.handle('auth:status', () => {
+
+          return {
+            loggedIn: session.loggedIn,
+          }
+        })
+
       }
       const appState = store.get('appState')
       console.log("app state", appState)
@@ -346,12 +365,15 @@ app.whenReady().then(async () => {
       await syncToServer(payload)
       store?.set('sessions', [])
       // store?.set('currentSession', null)
-      
+
     } catch (error) {
       console.log('sending to server failed', error)
     }
     console.log('sending to server end')
   }, SYNC_REMOTE_INTERVAL_MS)
+
+
+  sendHeartBeat(store)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
