@@ -30,22 +30,111 @@ type DetailedSession = {
 }
 
 const COLORS = [
-    '#3B82F6',
-    '#22C55E',
-    '#F59E0B',
-    '#EF4444',
-    '#8B5CF6',
-    '#06B6D4',
-    '#EC4899',
-    '#84CC16',
+    '#3B82F6', // Blue
+    '#10B981', // Emerald
+    '#F59E0B', // Amber
+    '#EF4444', // Red
+    '#8B5CF6', // Purple
+    '#06B6D4', // Cyan
+    '#EC4899', // Pink
+    '#14B8A6', // Teal
+    '#6366F1', // Indigo
+    '#84CC16', // Lime
 ]
 
-function getAppColor(index: number) {
-    return COLORS[index % COLORS.length]
+const formatHour = (timeStr: string) => {
+    const hour = parseInt(timeStr.split(':')[0], 10)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const formattedHour = hour % 12 === 0 ? 12 : hour % 12
+    return `${formattedHour} ${ampm}`
+}
+
+const formatMinutes = (mins: number) => {
+    if (mins < 60) return `${mins}m`
+    const hrs = Math.floor(mins / 60)
+    const remainingMins = mins % 60
+    return remainingMins > 0 ? `${hrs}h ${remainingMins}m` : `${hrs}h`
+}
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || !payload.length) return null
+
+    // Filter out items with 0 duration and sort by value descending
+    const activeItems = payload
+        .filter((item: any) => item.value && item.value > 0)
+        .sort((a: any, b: any) => b.value - a.value)
+
+    if (activeItems.length === 0) return null
+
+    const total = activeItems.reduce((sum: number, item: any) => sum + item.value, 0)
+    const formattedHour = formatHour(label)
+
+    return (
+        <div className="bg-[#0f172a]/95 backdrop-blur-md border border-slate-800 rounded-xl p-4 shadow-2xl min-w-[200px] text-xs">
+            <div className="flex justify-between items-center mb-2 border-b border-slate-800/60 pb-1.5">
+                <span className="font-semibold text-slate-200">{formattedHour}</span>
+                <span className="text-[10px] text-slate-400 font-medium">{Math.round(total)}m total</span>
+            </div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {activeItems.map((item: any) => (
+                    <div key={item.name} className="flex justify-between items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: item.color || item.fill }}
+                            />
+                            <span className="text-slate-300 truncate max-w-[120px] font-medium">
+                                {item.name}
+                            </span>
+                        </div>
+                        <span className="font-semibold text-slate-100 flex-shrink-0">
+                            {Math.round(item.value)}m
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+const CustomPieTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload.length) return null
+    const item = payload[0].payload
+    return (
+        <div className="bg-[#0f172a]/95 backdrop-blur-md border border-slate-800 rounded-xl p-3 shadow-2xl text-xs flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+                <div
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                />
+                <span className="font-semibold text-slate-200">{item.name}</span>
+            </div>
+            <div className="text-slate-400 font-medium">
+                Time: <span className="text-slate-100 font-semibold">{formatMinutes(item.value)}</span>
+            </div>
+        </div>
+    )
 }
 
 export default function HourlyTimeline() {
     const { activityLog } = useDailyActivitiesStore()
+
+    // Generate a consistent mapping of software to color
+    const appColors = useMemo(() => {
+        const colorsMap: Record<string, string> = {
+            Idle: '#475569', // Slate-600
+        }
+        
+        let appIndex = 0
+        activityLog.forEach((item: DetailedSession) => {
+            const key = item.activityType === 'break' ? 'Idle' : item.software
+            if (key !== 'Idle' && !colorsMap[key]) {
+                colorsMap[key] = COLORS[appIndex % COLORS.length]
+                appIndex++
+            }
+        })
+        return colorsMap
+    }, [activityLog])
 
     const uniqueApps = useMemo(() => {
         return [
@@ -140,16 +229,13 @@ export default function HourlyTimeline() {
         )
 
         return Object.entries(map)
-            .map(([name, value], index) => ({
+            .map(([name, value]) => ({
                 name,
                 value: Math.round(value),
-                color:
-                    name === 'Idle'
-                        ? '#475569'
-                        : getAppColor(index),
+                color: appColors[name] || '#475569',
             }))
             .sort((a, b) => b.value - a.value)
-    }, [activityLog])
+    }, [activityLog, appColors])
 
     const totalMinutes = pieChartData.reduce(
         (acc, cur) => acc + cur.value,
@@ -210,6 +296,7 @@ export default function HourlyTimeline() {
                             >
                                 <CartesianGrid
                                     strokeDasharray="3 3"
+                                    stroke="#1E293B"
                                     vertical={
                                         false
                                     }
@@ -217,9 +304,12 @@ export default function HourlyTimeline() {
 
                                 <XAxis
                                     dataKey="time"
-                                    fontSize={
-                                        11
-                                    }
+                                    stroke="#64748B"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={formatHour}
+                                    dy={10}
                                 />
 
                                 <YAxis
@@ -234,17 +324,31 @@ export default function HourlyTimeline() {
                                         45,
                                         60,
                                     ]}
+                                    stroke="#64748B"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={(val) => `${val}m`}
+                                    dx={-5}
                                 />
 
-                                <Tooltip />
+                                <Tooltip
+                                    content={<CustomTooltip />}
+                                    cursor={{ fill: '#1E293B', opacity: 0.15 }}
+                                />
 
-                                <Legend />
+                                <Legend
+                                    iconType="circle"
+                                    iconSize={8}
+                                    wrapperStyle={{
+                                        fontSize: 11,
+                                        paddingTop: 16,
+                                        color: '#64748B'
+                                    }}
+                                />
 
                                 {uniqueApps.map(
-                                    (
-                                        app,
-                                        index
-                                    ) => (
+                                    (app) => (
                                         <Bar
                                             key={
                                                 app
@@ -253,9 +357,9 @@ export default function HourlyTimeline() {
                                                 app
                                             }
                                             stackId="a"
-                                            fill={getAppColor(
-                                                index
-                                            )}
+                                            fill={appColors[app] || '#3B82F6'}
+                                            stroke="#0f172a"
+                                            strokeWidth={1}
                                         />
                                     )
                                 )}
@@ -263,7 +367,9 @@ export default function HourlyTimeline() {
                                 <Bar
                                     dataKey="Idle"
                                     stackId="a"
-                                    fill="#475569"
+                                    fill={appColors['Idle'] || '#475569'}
+                                    stroke="#0f172a"
+                                    strokeWidth={1}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
@@ -323,7 +429,7 @@ export default function HourlyTimeline() {
                                 )}
                             </Pie>
 
-                            <Tooltip />
+                            <Tooltip content={<CustomPieTooltip />} />
                         </PieChart>
                     </ResponsiveContainer>
 
@@ -341,39 +447,44 @@ export default function HourlyTimeline() {
                     </div>
                 </div>
 
-                <div className="space-y-2 max-h-32 overflow-y-auto">
+                <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
                     {pieChartData.map(
-                        (entry) => (
-                            <div
-                                key={
-                                    entry.name
-                                }
-                                className="flex justify-between text-xs"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className="w-2 h-2 rounded-full"
-                                        style={{
-                                            backgroundColor:
-                                                entry.color,
-                                        }}
-                                    />
+                        (entry) => {
+                            const pct = totalMinutes > 0 ? Math.round((entry.value / totalMinutes) * 100) : 0
+                            return (
+                                <div
+                                    key={
+                                        entry.name
+                                    }
+                                    className="flex justify-between text-xs items-center hover:bg-slate-800/40 px-2 py-1 -mx-2 rounded-md transition-colors"
+                                >
+                                    <div className="flex items-center gap-2 overflow-hidden mr-2">
+                                        <div
+                                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                            style={{
+                                                backgroundColor:
+                                                    entry.color,
+                                            }}
+                                        />
 
-                                    <span>
+                                        <span className="truncate text-slate-300 font-medium">
+                                            {
+                                                entry.name
+                                            }
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-normal flex-shrink-0">
+                                            ({pct}%)
+                                        </span>
+                                    </div>
+
+                                    <span className="font-semibold text-slate-200 flex-shrink-0">
                                         {
-                                            entry.name
+                                            formatMinutes(entry.value)
                                         }
                                     </span>
                                 </div>
-
-                                <span className="font-semibold">
-                                    {
-                                        entry.value
-                                    }
-                                    m
-                                </span>
-                            </div>
-                        )
+                            )
+                        }
                     )}
                 </div>
             </div>
