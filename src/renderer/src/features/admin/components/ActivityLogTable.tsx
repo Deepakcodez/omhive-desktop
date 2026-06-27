@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDailyActivitiesStore } from "../store";
-import { ChevronLeft, ChevronRight, } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, } from "lucide-react";
 import { DetailedSession } from "../types";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 
 
 const limitsRange = [20, 50, 100, 150, 200]
@@ -85,17 +87,10 @@ export default function ActivityLogTable() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search app or window title..."
-                        className="w-full bg-card border border-border text-foreground text-sm px-4 py-2 pl-10 rounded-full focus:outline-none  placeholder-foreground/50 transition"
+                        className="w-full bg-card border-y border-y-border text-foreground text-sm px-4 py-2 pl-10 rounded-full focus:outline-none  placeholder-foreground/50 transition"
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-foreground">
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
+                        <Search size={15} />
                     </div>
                 </div>
             </div>
@@ -116,10 +111,13 @@ export default function ActivityLogTable() {
                             </thead>
                             <tbody className="divide-y divide-slate-800/50 text-xs text-slate-300">
                                 {
-                                    loading ? (
+                                        loading ? (
                                         <tr>
-                                            <td colSpan={4} className="py-8 text-center text-slate-500 font-medium">
-                                                Loading...
+                                            <td colSpan={4} className=" h-120 py-8 text-center text-foreground font-medium">
+                                                <div className="flex flex-col items-center justify-center gap-2">
+                                                    <Spinner />
+                                                    Fetching User Activities...
+                                                </div>
                                             </td>
                                         </tr>
                                     )
@@ -188,30 +186,34 @@ export default function ActivityLogTable() {
                         {total} activities
                     </p>
 
-                    <select
-                        value={limit}
-                        onChange={(e) => {
+                    <div className="bg-card border-y border-y-border rounded-full px-2">
+
+                        <Select onValueChange={(value) => {
                             setPage(1)
-                            setLimit(Number(e.target.value))
-                        }}
-                        className="bg-card border border-border rounded px-2 py-1 focus:outline-none focus:border-none"
-                    >
-                        {limitsRange.map((item) => (
-                            <option
-                                key={item}
-                                value={item}
-                            >
-                                {item} / page
-                            </option>
-                        ))}
-                    </select>
+                            setLimit(Number(value))
+                        }}>
+                            <SelectTrigger className="w-[180px] border-none outline-none focus:outline-none focus:ring-0 ">
+                                <SelectValue placeholder={`${limit} / page`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    {limitsRange.map((item) => (
+                                        <SelectItem key={item} value={item.toString()}>
+                                            {item} / page
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-400">
                         Page {page} of {totalPages}
                     </span>
-                    <div className="flex  bg-card border border-border rounded-full">
+                    <div className="flex  bg-card border-y border-y-border rounded-full">
                         <button
                             title="Prev Page"
                             disabled={page === 1}

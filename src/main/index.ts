@@ -15,6 +15,7 @@ import type { StoreType, TSession, } from './types'
 import { IPC_Handlers } from './ipc'
 import { isLoggedIn, sendHeartBeat, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
+import { AuthIpc } from './ipc/authIpc'
 
 
 
@@ -124,20 +125,23 @@ app.whenReady().then(async () => {
       appState: {
         trackingEnabled: false,
         currentUserId: '',
-        attendanceId: ''
+        attendanceId: '',
+        appInitialized: false
       },
       sessions: []
     }
   })
-
-
   const userInfo = store.get('userInfo')
+
+  AuthIpc({ store })
+
+
   console.log("user info--", userInfo)
 
 
   if (userInfo.userId) {
+    const session = await isLoggedIn(userInfo.userId)
     try {
-      const session = await isLoggedIn(userInfo.userId)
       if (session?.loggedIn) {
 
         store.set('appState', {
@@ -156,20 +160,16 @@ app.whenReady().then(async () => {
           ...userInfo,
           attendanceId: ''
         })
-
-        ipcMain.handle('auth:status', () => {
-
-          return {
-            loggedIn: session.loggedIn,
-          }
-        })
-
       }
       const appState = store.get('appState')
       console.log("app state", appState)
       console.log('Creating session', {
         userId: appState.currentUserId,
         attendanceId: appState.attendanceId
+      })
+      store.set('appState', {
+        ...appState,
+        appInitialized: true
       })
     } catch (err) {
       console.error(err)

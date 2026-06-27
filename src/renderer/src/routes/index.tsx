@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@renderer/lib/utils'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
@@ -12,6 +13,7 @@ function RouteComponent() {
   const [inputUserName, setInputUserName] = useState('')
   const [currentTime, setCurrentTime] = useState(new Date())
   const [workStatus, setWorkStatus] = useState<'working' | 'break' | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const setWorkingStatus = (status: 'working' | 'break') => {
     localStorage.setItem('status', status)
@@ -29,31 +31,62 @@ function RouteComponent() {
 
   useEffect(() => {
     const init = async () => {
-      const auth = await window.api.isLoggedIn()
+      try {
 
-      if (!auth.loggedIn) {
-        localStorage.removeItem('status')
-        localStorage.removeItem('attendanceId')
+        const userId =
+          localStorage.getItem("userId")
+
+        const userName =
+          localStorage.getItem("userName")
+
+        // Restore user permanently
+        if (userId && userName) {
+          setUser({
+            id: userId,
+            name: userName
+          })
+        }
+
+
+        const auth = await window.api.isLoggedIn()
+
+        console.log({
+          auth,
+          userId: localStorage.getItem("userId"),
+          userName: localStorage.getItem("userName")
+        })
+
+
+        if (
+          auth.initialized &&
+          !auth.loggedIn
+        ) {
+          localStorage.removeItem("status")
+          localStorage.removeItem("attendanceId")
+          localStorage.removeItem("breakId")
+          setWorkStatus(null)
+          return
+        }
+
+        const status =
+          localStorage.getItem("status")
+
+
+
+        if (status) {
+          setWorkStatus(
+            status as "working" | "break"
+          )
+        }
+
+     
+      } finally {
+        setLoading(false)
+
       }
     }
 
     init()
-  }, [])
-  useEffect(() => {
-    const status = localStorage.getItem('status')
-    const userId = localStorage.getItem('userId')
-    const userName = localStorage.getItem('userName')
-
-    if (status) {
-      setWorkStatus(status as 'working' | 'break')
-    }
-
-    if (userId && userName) {
-      setUser({
-        id: userId,
-        name: userName
-      })
-    }
   }, [])
 
   const handleAction = async (action: 'LOGIN' | 'BREAK' | 'RESUME' | 'LOGOUT') => {
@@ -209,98 +242,109 @@ function RouteComponent() {
     }
   }
 
+
+
   return (
-    <div className="min-h-screen bg-background flex flex-col gap-4 items-center justify-center p-4 select-none">
-      <div className='flex flex-col  justify-center items-center'>
-        <h2 className="text-[10vw] leading-none font-bold mt-2 text-white/20">
-          {currentTime.toLocaleTimeString()}
-        </h2>
-        <div className='bg-linear-to-b from-white/30 to-card w-fit px-2 border-t border-t-white/30 rounded-full  '>
-          <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
-        </div>
-      </div>
-      <div className="w-full max-w-2xl rounded-2xl bg-linear-to-b from-white/20 to-card shadow-xl p-6 border border-white/30">
-        {/* Header */}
-        <div className="text-center mb-8"></div>
+    <>
+      {
+        loading ? <div className="flex h-screen items-center justify-center">
+          <Spinner />
+        </div> :
+          <div className="min-h-screen bg-background flex flex-col gap-4 items-center justify-center p-4 select-none">
+            <div className='flex flex-col  justify-center items-center'>
+              <h2 className="text-[10vw] leading-none font-bold mt-2 text-white/20">
+                {currentTime.toLocaleTimeString()}
+              </h2>
+              <div className='bg-linear-to-b from-white/30 to-card w-fit px-2 border-t border-t-white/30 rounded-full  '>
+                <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
+              </div>
+            </div>
+            <div className="w-full max-w-2xl rounded-2xl bg-linear-to-b from-white/20 to-card shadow-xl p-6 border border-white/30">
+              {/* Header */}
+              <div className="text-center mb-8"></div>
 
-        {/* Username */}
-        {(!user?.name || !user.id) && (
-          <div className="mb-6">
-            <label className="block mb-2 font-medium text-foreground">Username</label>
+              {/* Username */}
+              {(!user?.name || !user.id) && (
+                <div className="mb-6">
+                  <label className="block mb-2 font-medium text-foreground">Username</label>
 
-            <input
-              type="text"
-              placeholder="Enter username"
-              value={inputUserName}
-              onChange={(e) => setInputUserName(e.target.value)}
-              className="w-full   bg-foreground p-3 outline-none rounded-full"
-            />
+                  <input
+                    type="text"
+                    placeholder="Enter username"
+                    value={inputUserName}
+                    onChange={(e) => setInputUserName(e.target.value)}
+                    className="w-full   bg-foreground/10 p-3 outline-none rounded-full   "
+                  />
+                </div>
+              )}
+
+              {user?.name && (
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold text-foreground">
+                    Welcome Back <span className="text-primary uppercase">{user?.name}</span>!
+                  </h1>
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    const isLoggedIn =
+                      workStatus === 'working' ||
+                      workStatus === 'break'
+                    isLoggedIn ?
+                      handleAction('LOGOUT') :
+                      handleAction('LOGIN')
+                  }}
+                  className={cn("rounded-full text-white py-3 font-semibold hover:opacity-90 active:scale-95  transition-all duration-300",
+                    (workStatus === 'working' ||
+                      workStatus === 'break') ? 'bg-linear-to-b from-red-500 to-red-600 border border-red-400' : 'bg-linear-to-b from-green-500 to-green-600')}
+                >
+                  {(workStatus === 'working' ||
+                    workStatus === 'break') ? 'Logout' : 'Login'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    const attendanceId =
+                      localStorage.getItem('attendanceId')
+                    if (!attendanceId) {
+                      window.api.alert({
+                        title: 'Already Logged Out',
+                        message: 'You are already logged out',
+                        type: 'info'
+                      })
+                      return
+                    }
+                    if (workStatus == 'break') {
+                      console.log('clling resume')
+                      handleAction('RESUME')
+                    } else {
+                      handleAction('BREAK')
+                    }
+                  }}
+                  className={cn("rounded-full  text-white py-3 font-semibold hover:opacity-90 active:scale-95  transition-all duration-300",
+                    workStatus === 'break' ? "bg-linear-to-b from-purple-500 to-purple-600 border border-purple-400" : "bg-linear-to-b from-yellow-500 to-yellow-600 border border-yellow-400"
+
+                  )}
+                >
+                  {workStatus === 'break' ? 'Resume' : 'Break'}
+                </button>
+
+
+              </div>
+
+              {/* Footer */}
+              <div className="mt-6 text-center text-sm text-gray-500">
+                Status: {workStatus?.toUpperCase() || 'Not Logged In Yet'}
+              </div>
+              <Link to="/admin">go to dashboard</Link>
+            </div>
           </div>
-        )}
+      }
 
-        {user?.name && (
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground">
-              Welcome Back <span className="text-primary uppercase">{user?.name}</span>!
-            </h1>
-          </div>
-        )}
+    </>
 
-        {/* Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => {
-              const isLoggedIn =
-                workStatus === 'working' ||
-                workStatus === 'break'
-              isLoggedIn ?
-                handleAction('LOGOUT') :
-                handleAction('LOGIN')
-            }}
-            className={cn("rounded-full text-white py-3 font-semibold hover:opacity-90 active:scale-95  transition-all duration-300",
-              (workStatus === 'working' ||
-                workStatus === 'break') ? 'bg-linear-to-b from-red-500 to-red-600 border border-red-400' : 'bg-linear-to-b from-green-500 to-green-600')}
-          >
-            {(workStatus === 'working' ||
-              workStatus === 'break') ? 'Logout' : 'Login'}
-          </button>
-
-          <button
-            onClick={() => {
-              const attendanceId =
-                localStorage.getItem('attendanceId')
-              if (!attendanceId) {
-                window.api.alert({
-                  title: 'Already Logged Out',
-                  message: 'You are already logged out',
-                  type: 'info'
-                })
-                return
-              }
-              if (workStatus == 'break') {
-                console.log('clling resume')
-                handleAction('RESUME')
-              } else {
-                handleAction('BREAK')
-              }
-            }}
-            className={cn("rounded-full  text-white py-3 font-semibold hover:opacity-90 active:scale-95  transition-all duration-300",
-              workStatus === 'break' ? "bg-linear-to-b from-purple-500 to-purple-600 border border-purple-400" : "bg-linear-to-b from-yellow-500 to-yellow-600 border border-yellow-400"
-
-            )}
-          >
-            {workStatus === 'break' ? 'Resume' : 'Break'}
-          </button>
-
-
-        </div>
-
-        {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Status: {workStatus?.toUpperCase() || 'Not Logged In Yet'}
-        </div>
-        <Link to="/admin">go to dashboard</Link>
-      </div>
-    </div>
   )
 }

@@ -24,6 +24,7 @@ export type AppState = {
   trackingEnabled: boolean
   currentUserId: string | null
   attendanceId: string | null
+  appInitialized: boolean
 }
 
 

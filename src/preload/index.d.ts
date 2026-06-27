@@ -174,9 +174,12 @@ interface Api {
   onBeforeClose: (callback: () => void) => void
   closeCancelled: () => void
   closeApp: () => void
-  isLoggedIn: () => {
-    loggedIn: false
-  }
+  isLoggedIn: () => ({
+    initialized: boolean,
+    loggedIn: boolean,
+    trackingEnabled: boolean,
+    attendanceId: string
+  })
 }
 
 declare global {
