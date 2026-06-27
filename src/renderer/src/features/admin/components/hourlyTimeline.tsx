@@ -123,12 +123,15 @@ export default function HourlyTimeline() {
     const appColors = useMemo(() => {
         const colorsMap: Record<string, string> = {
             Idle: '#475569', // Slate-600
+            Break: '#f59e0b', // Amber-500
         }
         
         let appIndex = 0
         activityLog.forEach((item: DetailedSession) => {
-            const key = item.activityType === 'break' ? 'Idle' : item.software
-            if (key !== 'Idle' && !colorsMap[key]) {
+            const key = item.software === 'Break' || item.software === 'Idle'
+                ? item.software
+                : (item.activityType === 'break' ? 'Idle' : item.software)
+            if (key !== 'Idle' && key !== 'Break' && !colorsMap[key]) {
                 colorsMap[key] = COLORS[appIndex % COLORS.length]
                 appIndex++
             }
@@ -140,10 +143,12 @@ export default function HourlyTimeline() {
         return [
             ...new Set(
                 activityLog
-                    .filter(
-                        (a: DetailedSession) =>
-                            a.activityType === 'work'
-                    )
+                    .filter((a: DetailedSession) => {
+                        const key = a.software === 'Break' || a.software === 'Idle'
+                            ? a.software
+                            : (a.activityType === 'break' ? 'Idle' : a.software)
+                        return key !== 'Idle' && key !== 'Break'
+                    })
                     .map((a: DetailedSession) => a.software)
             ),
         ]
@@ -194,10 +199,9 @@ export default function HourlyTimeline() {
                         60000
 
                     const key =
-                        session.activityType ===
-                        'break'
-                            ? 'Idle'
-                            : session.software
+                        session.software === 'Break' || session.software === 'Idle'
+                            ? session.software
+                            : (session.activityType === 'break' ? 'Idle' : session.software)
 
                     bins[hour][key] =
                         (bins[hour][key] || 0) +
@@ -217,10 +221,9 @@ export default function HourlyTimeline() {
         activityLog.forEach(
             (item: DetailedSession) => {
                 const key =
-                    item.activityType ===
-                    'break'
-                        ? 'Idle'
-                        : item.software
+                    item.software === 'Break' || item.software === 'Idle'
+                        ? item.software
+                        : (item.activityType === 'break' ? 'Idle' : item.software)
 
                 map[key] =
                     (map[key] || 0) +
@@ -243,7 +246,7 @@ export default function HourlyTimeline() {
     )
 
     const activeMinutes = pieChartData
-        .filter((x) => x.name !== 'Idle')
+        .filter((x) => x.name !== 'Idle' && x.name !== 'Break')
         .reduce(
             (acc, cur) => acc + cur.value,
             0
@@ -269,7 +272,7 @@ export default function HourlyTimeline() {
 
                         <p className="text-slate-400 text-xs mt-0.5">
                             Distribution of
-                            software and idle
+                            software, idle, and break
                             time per hour.
                         </p>
                     </div>
@@ -368,6 +371,14 @@ export default function HourlyTimeline() {
                                     dataKey="Idle"
                                     stackId="a"
                                     fill={appColors['Idle'] || '#475569'}
+                                    stroke="#0f172a"
+                                    strokeWidth={1}
+                                />
+
+                                <Bar
+                                    dataKey="Break"
+                                    stackId="a"
+                                    fill={appColors['Break'] || '#f59e0b'}
                                     stroke="#0f172a"
                                     strokeWidth={1}
                                 />
