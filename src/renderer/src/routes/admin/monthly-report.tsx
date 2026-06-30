@@ -572,6 +572,7 @@ function ActivityModal({
                     userId,
                     date,
                     attendanceId: '',
+                    page: 1,
                     limit: 500
                 });
                 if (response.success && response.data) {

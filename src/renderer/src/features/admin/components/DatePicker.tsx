@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react'
 interface DatePickerProps {
   selectedDate: string // YYYY-MM-DD
   onSelectDate: (date: string) => void
+  setShowCalender: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const MONTH_NAMES = [
@@ -51,8 +52,12 @@ function parseDate(dateString: string) {
 
 export const DatePicker: React.FC<DatePickerProps> = ({
   selectedDate,
-  onSelectDate
+  onSelectDate,
+  setShowCalender
 }) => {
+
+  const calendarRef = React.useRef<HTMLDivElement>(null)
+
   const initialDate = useMemo(() => {
     if (selectedDate) {
       return parseDate(selectedDate)
@@ -183,8 +188,34 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     return cells
   }, [currentYear, currentMonth])
 
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setShowCalender(false)
+      }
+    }
+
+    document.addEventListener(
+      'mousedown',
+      handleClickOutside
+    )
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleClickOutside
+      )
+    }
+  }, [])
+
   return (
-    <div className="border-t border-t-white/60 border-b border-b-border flex flex-col space-y-2 w-full bg-linear-to-b from-white/20 to-card backdrop-blur-lg rounded-2xl p-4 shadow-xl">
+    <div ref={calendarRef} className="border-t border-t-white/60 border-b border-b-border flex flex-col space-y-2 w-full bg-linear-to-b from-white/20 to-card backdrop-blur-lg rounded-2xl p-4 shadow-xl">
       <div className="flex items-center justify-between px-1 pb-2">
         <h4 className="text-sm font-bold text-slate-100">
           {MONTH_NAMES[currentMonth]} {currentYear}

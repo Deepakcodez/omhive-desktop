@@ -1,5 +1,5 @@
 import { Coffee, LogOut, X } from 'lucide-react'
-import React, { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction } from 'react'
 import toast from 'react-hot-toast'
 
 type Props = {

@@ -38,6 +38,8 @@ const api = {
 
   getUserActivity: (payload: { userId: string; attendanceId: string; date: string; limit: number }) =>
     ipcRenderer.invoke('activity:track', payload),
+  getUserGraphActivity: (payload: { userId: string; attendanceId: string; date: string; }) =>
+    ipcRenderer.invoke('activity:graph-track', payload),
 
   alert: (payload: { title: string; message: string; type?: 'info' | 'warning' | 'error' }) =>
     ipcRenderer.invoke('system:alert', payload),

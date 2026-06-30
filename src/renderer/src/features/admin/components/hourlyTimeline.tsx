@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
     BarChart,
     Bar,
@@ -8,26 +8,12 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
 } from 'recharts'
 
 import { useDailyActivitiesStore } from '../store'
+import { GraphData } from '@shared/types/graph'
 
-type DetailedSession = {
-    id: string
-    attendanceId: string
-    userId: string
-    activityType: 'break' | 'work'
-    startTime: number | Date
-    endTime: number | Date
-    duration: number
-    software: string
-    title: string
-    hostname: string
-    systemUsername: string
-}
+
 
 const COLORS = [
     '#3B82F6', // Blue
@@ -49,12 +35,12 @@ const formatHour = (timeStr: string) => {
     return `${formattedHour} ${ampm}`
 }
 
-const formatMinutes = (mins: number) => {
-    if (mins < 60) return `${mins}m`
-    const hrs = Math.floor(mins / 60)
-    const remainingMins = mins % 60
-    return remainingMins > 0 ? `${hrs}h ${remainingMins}m` : `${hrs}h`
-}
+// const formatMinutes = (mins: number) => {
+//     if (mins < 60) return `${mins}m`
+//     const hrs = Math.floor(mins / 60)
+//     const remainingMins = mins % 60
+//     return remainingMins > 0 ? `${hrs}h ${remainingMins}m` : `${hrs}h`
+// }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null
@@ -70,7 +56,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const formattedHour = formatHour(label)
 
     return (
-        <div className="bg-[#0f172a]/95 backdrop-blur-md border border-slate-800 rounded-xl p-4 shadow-2xl min-w-[200px] text-xs">
+        <div className="bg-linear-to-b from-white/20 to-card border-t border-t-white/40 border-b border-b-white/10  backdrop-blur-md rounded-xl p-4 shadow-2xl min-w-[200px] text-xs">
             <div className="flex justify-between items-center mb-2 border-b border-slate-800/60 pb-1.5">
                 <span className="font-semibold text-slate-200">{formattedHour}</span>
                 <span className="text-[10px] text-slate-400 font-medium">{Math.round(total)}m total</span>
@@ -80,14 +66,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                     <div key={item.name} className="flex justify-between items-center gap-4">
                         <div className="flex items-center gap-2">
                             <div
-                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
                                 style={{ backgroundColor: item.color || item.fill }}
                             />
                             <span className="text-slate-300 truncate max-w-[120px] font-medium">
                                 {item.name}
                             </span>
                         </div>
-                        <span className="font-semibold text-slate-100 flex-shrink-0">
+                        <span className="font-semibold text-slate-100 shrink-0">
                             {Math.round(item.value)}m
                         </span>
                     </div>
@@ -97,27 +83,44 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     )
 }
 
-const CustomPieTooltip = ({ active, payload }: any) => {
-    if (!active || !payload || !payload.length) return null
-    const item = payload[0].payload
-    return (
-        <div className="bg-[#0f172a]/95 backdrop-blur-md border border-slate-800 rounded-xl p-3 shadow-2xl text-xs flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-                <div
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                />
-                <span className="font-semibold text-slate-200">{item.name}</span>
-            </div>
-            <div className="text-slate-400 font-medium">
-                Time: <span className="text-slate-100 font-semibold">{formatMinutes(item.value)}</span>
-            </div>
-        </div>
-    )
-}
+// const CustomPieTooltip = ({ active, payload }: any) => {
+//     if (!active || !payload || !payload.length) return null
+//     const item = payload[0].payload
+//     return (
+//         <div className="bg-[#0f172a]/95 backdrop-blur-md border border-slate-800 rounded-xl p-3 shadow-2xl text-xs flex flex-col gap-1">
+//             <div className="flex items-center gap-2">
+//                 <div
+//                     className="w-2.5 h-2.5 rounded-full"
+//                     style={{ backgroundColor: item.color }}
+//                 />
+//                 <span className="font-semibold text-slate-200">{item.name}</span>
+//             </div>
+//             <div className="text-slate-400 font-medium">
+//                 Time: <span className="text-slate-100 font-semibold">{formatMinutes(item.value)}</span>
+//             </div>
+//         </div>
+//     )
+// }
 
 export default function HourlyTimeline() {
-    const { activityLog } = useDailyActivitiesStore()
+    const { selectedDate, selectedUserId, selectedAttendanceId } = useDailyActivitiesStore()
+    const [graphData, setGraphData] = useState<GraphData[] | null>(null)
+    useEffect(() => {
+
+        const fetchGrpahData = async () => {
+            const data = await window.api.getUserGraphActivity({
+                userId: selectedUserId,
+                date: selectedDate,
+                attendanceId: selectedAttendanceId,
+            })
+            if (data.success && data.data) {
+                setGraphData(data?.data)
+            }
+        }
+
+
+        fetchGrpahData()
+    }, [selectedDate, selectedUserId, selectedAttendanceId])
 
     // Generate a consistent mapping of software to color
     const appColors = useMemo(() => {
@@ -125,9 +128,9 @@ export default function HourlyTimeline() {
             Idle: '#475569', // Slate-600
             Break: '#f59e0b', // Amber-500
         }
-        
+
         let appIndex = 0
-        activityLog.forEach((item: DetailedSession) => {
+        graphData?.forEach((item) => {
             const key = item.software === 'Break' || item.software === 'Idle'
                 ? item.software
                 : (item.activityType === 'break' ? 'Idle' : item.software)
@@ -137,22 +140,24 @@ export default function HourlyTimeline() {
             }
         })
         return colorsMap
-    }, [activityLog])
+    }, [graphData])
+
 
     const uniqueApps = useMemo(() => {
+        if (!graphData) return []
         return [
             ...new Set(
-                activityLog
-                    .filter((a: DetailedSession) => {
+                graphData
+                    .filter((a) => {
                         const key = a.software === 'Break' || a.software === 'Idle'
                             ? a.software
                             : (a.activityType === 'break' ? 'Idle' : a.software)
                         return key !== 'Idle' && key !== 'Break'
                     })
-                    .map((a: DetailedSession) => a.software)
+                    .map((a) => a.software)
             ),
         ]
-    }, [activityLog])
+    }, [graphData])
 
     const chartBins = useMemo(() => {
         const bins: any[] = []
@@ -165,15 +170,15 @@ export default function HourlyTimeline() {
             })
         }
 
-        activityLog.forEach(
-            (session: DetailedSession) => {
+        graphData?.forEach(
+            (session) => {
                 const start = new Date(
                     session.startTime
                 )
 
-                const end = new Date(
-                    session.endTime
-                )
+                const end = session.endTime
+                    ? new Date(session.endTime)
+                    : new Date()
 
                 let current = new Date(start)
 
@@ -213,56 +218,56 @@ export default function HourlyTimeline() {
         )
 
         return bins
-    }, [activityLog])
+    }, [graphData])
 
-    const pieChartData = useMemo(() => {
-        const map: Record<string, number> = {}
+    // const pieChartData = useMemo(() => {
+    //     const map: Record<string, number> = {}
 
-        activityLog.forEach(
-            (item: DetailedSession) => {
-                const key =
-                    item.software === 'Break' || item.software === 'Idle'
-                        ? item.software
-                        : (item.activityType === 'break' ? 'Idle' : item.software)
+    //     graphData.forEach(
+    //         (item: DetailedSession) => {
+    //             const key =
+    //                 item.software === 'Break' || item.software === 'Idle'
+    //                     ? item.software
+    //                     : (item.activityType === 'break' ? 'Idle' : item.software)
 
-                map[key] =
-                    (map[key] || 0) +
-                    item.duration / 60
-            }
-        )
+    //             map[key] =
+    //                 (map[key] || 0) +
+    //                 item.duration / 60
+    //         }
+    //     )
 
-        return Object.entries(map)
-            .map(([name, value]) => ({
-                name,
-                value: Math.round(value),
-                color: appColors[name] || '#475569',
-            }))
-            .sort((a, b) => b.value - a.value)
-    }, [activityLog, appColors])
+    //     return Object.entries(map)
+    //         .map(([name, value]) => ({
+    //             name,
+    //             value: Math.round(value),
+    //             color: appColors[name] || '#475569',
+    //         }))
+    //         .sort((a, b) => b.value - a.value)
+    // }, [graphData, appColors])
 
-    const totalMinutes = pieChartData.reduce(
-        (acc, cur) => acc + cur.value,
-        0
-    )
+    // const totalMinutes = pieChartData.reduce(
+    //     (acc, cur) => acc + cur.value,
+    //     0
+    // )
 
-    const activeMinutes = pieChartData
-        .filter((x) => x.name !== 'Idle' && x.name !== 'Break')
-        .reduce(
-            (acc, cur) => acc + cur.value,
-            0
-        )
+    // const activeMinutes = pieChartData
+    //     .filter((x) => x.name !== 'Idle' && x.name !== 'Break')
+    //     .reduce(
+    //         (acc, cur) => acc + cur.value,
+    //         0
+    //     )
 
-    const activeRatio =
-        totalMinutes === 0
-            ? 0
-            : Math.round(
-                  (activeMinutes /
-                      totalMinutes) *
-                      100
-              )
+    // const activeRatio =
+    //     totalMinutes === 0
+    //         ? 0
+    //         : Math.round(
+    //             (activeMinutes /
+    //                 totalMinutes) *
+    //             100
+    //         )
 
     return (
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
             <div className=" bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                     <div>
@@ -277,7 +282,7 @@ export default function HourlyTimeline() {
                         </p>
                     </div>
 
-                    <span className="text-xs font-semibold uppercase border border-border px-2.5 py-1 rounded-full bg-primary text-background">
+                    <span className="text-xs  border-y border-y-border px-2.5 py-0.5 rounded-full bg-white/10 text-foreground">
                         Minutes
                     </span>
                 </div>
@@ -388,7 +393,7 @@ export default function HourlyTimeline() {
                 </div>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+            {/* <div className="bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col justify-between">
                 <div>
                     <h3 className="text-lg font-semibold text-slate-200">
                         App Distribution
@@ -498,7 +503,7 @@ export default function HourlyTimeline() {
                         }
                     )}
                 </div>
-            </div>
+            </div> */}
         </div>
     )
 }

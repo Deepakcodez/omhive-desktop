@@ -94,6 +94,7 @@ export default function DailyAttendance() {
                                 <DatePicker
                                     selectedDate={selectedDate}
                                     onSelectDate={setSelectedDate}
+                                    setShowCalender={setShowCalender}
                                 />
                             </div>
                         </Activity>

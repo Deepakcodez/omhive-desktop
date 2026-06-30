@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { GraphData } from '@shared/types/graph'
 import { DailyAttendanceResponse } from 'src/shared/types'
 
 
@@ -162,6 +163,15 @@ interface Api {
       limit: number;
       offset: number;
     } | null
+    success: boolean
+    message: string
+  }>;
+  getUserGraphActivity: (payload: {
+    userId: string
+    date: string
+    attendanceId: string
+  }) => Promise<{
+    data: GraphData[] | null;
     success: boolean
     message: string
   }>;
