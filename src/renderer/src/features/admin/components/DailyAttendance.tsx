@@ -74,7 +74,12 @@ export default function DailyAttendance() {
     return (
         <div className="space-y-2">
             <div className='flex justify-between items-center'>
-                <h2 className='text-2xl'>Daily Attendance</h2>
+                <div className='flex gap-2 items-center justify-center'>
+                    <h2 className='text-2xl'>Daily Attendance</h2>
+                    <div className='rounded-full bg-card px-4 py-1 border-y  border-y-border text-muted-foreground text-xs'>
+                        {selectedDate}
+                    </div>
+                </div>
                 <div className='flex gap-1 items-center'>
                     <Link
                         to="/admin/monthly-report"

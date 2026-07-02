@@ -13,7 +13,7 @@ import {
 } from './constants'
 import type { StoreType, TSession, } from './types'
 import { IPC_Handlers } from './ipc'
-import { isLoggedIn, sendHeartBeat, startIdleSession, stopIdleSession, syncToServer } from './utils'
+import { isLoggedIn, periodicValidation, sendHeartBeat, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
 import { AuthIpc } from './ipc/authIpc'
 
@@ -136,6 +136,7 @@ app.whenReady().then(async () => {
   AuthIpc({ store })
 
 
+
   console.log("user info--", userInfo)
 
 
@@ -171,10 +172,86 @@ app.whenReady().then(async () => {
         ...appState,
         appInitialized: true
       })
+
+
+
+
     } catch (err) {
       console.error(err)
     }
   }
+
+  periodicValidation({
+    store,
+    getCurrentSession: () => currentSession,
+    clearCurrentSession: () => {
+      currentSession = null
+    },
+    clearPendingSessions: () => {
+      pendingSessions = []
+    }
+  })
+
+  powerMonitor.on('suspend', async () => {
+    const appState = store.get('appState')
+
+    if (!appState.trackingEnabled) return
+
+    const closed = closeCurrentSession()
+
+    if (closed) {
+      pendingSessions.push(closed)
+    }
+
+    currentSession = null
+
+    if (idleStartedAt && appState.attendanceId) {
+      try {
+        await stopIdleSession({
+          attendanceId: appState.attendanceId,
+          endTime: new Date().toISOString()
+        })
+
+        idleStartedAt = null
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  })
+
+  powerMonitor.on('resume', async () => {
+    const appState = store.get('appState')
+
+    if (!appState.currentUserId) return
+
+    const session = await isLoggedIn(
+      appState.currentUserId
+    )
+
+    if (!session?.loggedIn) {
+      store.set('appState', {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: '',
+        appInitialized: true
+      })
+
+      currentSession = null
+      pendingSessions = []
+
+      store.delete('currentSession')
+
+      mainWindow?.webContents.send(
+        'user:auto-logout'
+      )
+
+      return
+    }
+
+    mainWindow?.webContents.send(
+      'activity:refresh'
+    )
+  })
 
   electronApp.setAppUserModelId('com.omhive')
 

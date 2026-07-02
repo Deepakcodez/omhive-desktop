@@ -1,6 +1,7 @@
 import ElectronStore from 'electron-store'
-import { API_ENDPOINT } from '../constants'
+import { API_ENDPOINT, HEARTBEAT_CHECK_MS, PERIODIC_CHECK_MS } from '../constants'
 import type { AppState, StoreType, TSession } from '../types'
+import { userInfo } from 'os'
 
 
 export function getLocalDate(date = new Date()) {
@@ -43,19 +44,19 @@ export async function syncToServer(sessions: TSession[]): Promise<void> {
 export const isLoggedIn = async (
   userId: string,
 ): Promise<
-    | {
-      loggedIn: boolean
-      attendanceId: string
-      loginTime: Date
-      status: 'working' | 'break' | 'logged_out'
-    }
-    | {
-      loggedIn: boolean
-      attendanceId: null
-      loginTime: null
-      status: null
-    }
-  > => {
+  | {
+    loggedIn: boolean
+    attendanceId: string
+    loginTime: Date
+    status: 'working' | 'break' | 'logged_out'
+  }
+  | {
+    loggedIn: boolean
+    attendanceId: null
+    loginTime: null
+    status: null
+  }
+> => {
   try {
     const date = new Date().toISOString()
     const res = await fetch(`${API_ENDPOINT}/user/is-logged-in`, {
@@ -127,6 +128,7 @@ export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
 
   setInterval(async () => {
     const appState = store.get("appState")
+    const userInfo = store.get("userInfo")
     console.log("checking heartbeat")
     if (!appState.trackingEnabled) return
 
@@ -137,14 +139,84 @@ export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          userId: appState.currentUserId,
           attendanceId: appState.attendanceId,
           time: new Date().toISOString()
         })
       })
-      const response = await resp.json()
-      console.log(response)
+      const { data } = await resp.json()
+
+      console.log("is logged in", data)
+      if (!data.loggedIn) {
+        store.set("appState", {
+          ...appState,
+          trackingEnabled: false,
+          currentUserId: "",
+          attendanceId: "",
+        })
+        store.set('userInfo', {
+          ...userInfo,
+          attendanceId: ''
+
+        })
+      }
+
     } catch (error) {
       console.log("heartbeat error -> ", error)
+      store.set("appState", {
+        ...appState,
+        trackingEnabled: false,
+        currentUserId: "",
+        attendanceId: "",
+      })
+      store.set('userInfo', {
+        ...userInfo,
+        attendanceId: ''
+
+      })
     }
-  }, 10_000)
+  }, 5000)
+}
+
+export const periodicValidation = (
+  {
+    store,
+    getCurrentSession,
+    clearCurrentSession,
+    clearPendingSessions
+  }: {
+    store: ElectronStore<StoreType>,
+    getCurrentSession: () => TSession | null,
+    clearCurrentSession: () => void,
+    clearPendingSessions: () => void  
+  }) => {
+  setInterval(async () => { 
+    const appState = store.get('appState')
+
+    if (!appState.currentUserId) return
+
+    const session = await isLoggedIn(
+      appState.currentUserId
+    )
+
+    if (!session?.loggedIn) {
+      console.log('Attendance expired')
+
+      store.set('appState', {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: '',
+        appInitialized: true
+      })
+
+      clearCurrentSession()
+      clearPendingSessions()
+
+      store.delete('currentSession')
+
+      // mainWindow?.webContents.send(
+      //   'user:auto-logout'
+      // )
+    }
+  }, PERIODIC_CHECK_MS)
 }
