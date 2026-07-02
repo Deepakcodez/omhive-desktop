@@ -52,7 +52,31 @@ const api = {
   closeApp: () => {
     ipcRenderer.send('app:close')
   },
-  isLoggedIn: () => ipcRenderer.invoke('auth:status')
+  isLoggedIn: () => ipcRenderer.invoke('auth:status'),
+  onHostSleep: (callback) => {
+    const listener = (_, data) => callback(data)
+
+    ipcRenderer.on('app:sleep', listener)
+
+    return () => {
+      ipcRenderer.removeListener(
+        'app:sleep',
+        listener
+      )
+    }
+  },
+  onAutoLogout: (callback) => {
+    const listener = (_, data) => callback(data)
+
+    ipcRenderer.on('app:auto-logout', listener)
+
+    return () => {
+      ipcRenderer.removeListener(
+        'app:auto-logout',
+        listener
+      )
+    }
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

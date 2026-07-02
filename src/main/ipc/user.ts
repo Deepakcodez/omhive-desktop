@@ -3,7 +3,8 @@ import os from 'os'
 import { API_ENDPOINT } from '../constants'
 import { StoreType } from '../types'
 import type ElectronStore from 'electron-store'
-import { getLocalDate, updateAppState } from '../utils'
+import { getLocalDate,  updateAppState } from '../utils'
+import { handleUserLogout } from '../utils/auth'
 
 const HOSTNAME = os.hostname()
 const USERNAME = os.userInfo().username
@@ -134,23 +135,9 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
   })
   ipcMain.handle('user:logout', async (_, payload: { attendanceId: string }) => {
     try {
-      const response = await fetch(API_ENDPOINT + '/user/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const { data } = await response.json()
-
-      updateAppState(store, {
-        trackingEnabled: false,
-        currentUserId: '',
-        attendanceId: ''
+      const data = await handleUserLogout({
+        store,
+        attendanceId: payload.attendanceId
       })
       return data
     } catch (error) {

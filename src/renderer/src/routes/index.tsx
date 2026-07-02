@@ -1,6 +1,6 @@
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@renderer/lib/utils'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -14,7 +14,7 @@ function RouteComponent() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [workStatus, setWorkStatus] = useState<'working' | 'break' | null>(null)
   const [loading, setLoading] = useState(true)
-
+  const router = useRouter();
   const setWorkingStatus = (status: 'working' | 'break') => {
     localStorage.setItem('status', status)
     setWorkStatus(status)
@@ -28,6 +28,36 @@ function RouteComponent() {
     return () => clearInterval(timer)
   }, [])
 
+  useEffect(() => {
+    const unsubscribe =
+      window.api.onHostSleep((status) => {
+        if (status === 'sleep') {
+          setWorkingStatus('break')
+          router.invalidate();
+
+        }
+
+        if (status === 'resume') {
+          setWorkingStatus('working')
+          router.invalidate();
+
+        }
+      })
+
+    const unsubscribeAutoLogout =
+      window.api.onAutoLogout(() => {
+        localStorage.removeItem("attendanceId")
+        localStorage.removeItem("status")
+        localStorage.removeItem("breakId")
+        router.invalidate();
+      })
+
+
+    return () => {
+      unsubscribe()
+      unsubscribeAutoLogout()
+    }
+  }, [])
 
   useEffect(() => {
     const init = async () => {
@@ -79,7 +109,7 @@ function RouteComponent() {
           )
         }
 
-     
+
       } finally {
         setLoading(false)
 

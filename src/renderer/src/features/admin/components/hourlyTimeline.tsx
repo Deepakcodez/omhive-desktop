@@ -56,7 +56,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const formattedHour = formatHour(label)
 
     return (
-        <div className="bg-linear-to-b from-white/20 to-card border-t border-t-white/40 border-b border-b-white/10  backdrop-blur-md rounded-xl p-4 shadow-2xl min-w-[200px] text-xs">
+        <div className="bg-linear-to-b from-white/20 to-card border-t border-t-white/40 border-b border-b-neutral-900/5  backdrop-blur-md rounded-xl p-4 shadow-2xl min-w-[200px] text-xs">
             <div className="flex justify-between items-center mb-2 border-b border-slate-800/60 pb-1.5">
                 <span className="font-semibold text-slate-200">{formattedHour}</span>
                 <span className="text-[10px] text-slate-400 font-medium">{Math.round(total)}m total</span>
@@ -287,7 +287,7 @@ export default function HourlyTimeline() {
                     </span>
                 </div>
 
-                <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-x-auto custom-scrollbar">
                     <div className="h-80 min-w-[900px]">
                         <ResponsiveContainer
                             width="100%"

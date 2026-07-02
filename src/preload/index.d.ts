@@ -190,6 +190,12 @@ interface Api {
     trackingEnabled: boolean,
     attendanceId: string
   })
+  onAutoLogout: (
+    callback: () => void
+  ) => () => void
+  onHostSleep: (
+    callback: (s: 'sleep' | 'resume') => void
+  ) => () => void
 }
 
 declare global {

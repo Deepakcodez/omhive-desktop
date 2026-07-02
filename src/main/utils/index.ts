@@ -2,6 +2,7 @@ import ElectronStore from 'electron-store'
 import { API_ENDPOINT, HEARTBEAT_CHECK_MS, PERIODIC_CHECK_MS } from '../constants'
 import type { AppState, StoreType, TSession } from '../types'
 import { userInfo } from 'os'
+import { BrowserWindow } from 'electron'
 
 
 export function getLocalDate(date = new Date()) {
@@ -181,16 +182,18 @@ export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
 export const periodicValidation = (
   {
     store,
+    mainWindow,
     getCurrentSession,
     clearCurrentSession,
     clearPendingSessions
   }: {
     store: ElectronStore<StoreType>,
+    mainWindow: BrowserWindow | null,
     getCurrentSession: () => TSession | null,
     clearCurrentSession: () => void,
-    clearPendingSessions: () => void  
+    clearPendingSessions: () => void
   }) => {
-  setInterval(async () => { 
+  setInterval(async () => {
     const appState = store.get('appState')
 
     if (!appState.currentUserId) return
@@ -214,9 +217,12 @@ export const periodicValidation = (
 
       store.delete('currentSession')
 
-      // mainWindow?.webContents.send(
-      //   'user:auto-logout'
-      // )
+      mainWindow?.webContents.send(
+        'app:auto-logout'
+      )
     }
   }, PERIODIC_CHECK_MS)
 }
+
+
+

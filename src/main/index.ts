@@ -16,6 +16,7 @@ import { IPC_Handlers } from './ipc'
 import { isLoggedIn, periodicValidation, sendHeartBeat, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
 import { AuthIpc } from './ipc/authIpc'
+import { handleUserBreak, handleUserResume } from './utils/auth'
 
 
 
@@ -61,6 +62,13 @@ function getCurrentSessionSnapshot(): TSession | null {
 
 function pushToRenderer(session: TSession): void {
   mainWindow?.webContents.send('activity:update', session)
+}
+
+function setHostSleep(status: 'sleep' | 'resume') {
+  mainWindow?.webContents.send(
+    'app:sleep',
+    status
+  )
 }
 
 // ── Window ───────────────────────────────────────────────────────────────────
@@ -183,6 +191,7 @@ app.whenReady().then(async () => {
 
   periodicValidation({
     store,
+    mainWindow
     getCurrentSession: () => currentSession,
     clearCurrentSession: () => {
       currentSession = null
@@ -194,8 +203,9 @@ app.whenReady().then(async () => {
 
   powerMonitor.on('suspend', async () => {
     const appState = store.get('appState')
-
+    console.log("<><><><><><><><><><><><><><><> machine is sleeping <><><><><><><><><><><><><><><>")
     if (!appState.trackingEnabled) return
+    if (!appState.attendanceId) return
 
     const closed = closeCurrentSession()
 
@@ -205,22 +215,25 @@ app.whenReady().then(async () => {
 
     currentSession = null
 
-    if (idleStartedAt && appState.attendanceId) {
-      try {
-        await stopIdleSession({
-          attendanceId: appState.attendanceId,
-          endTime: new Date().toISOString()
-        })
+    try {
+      await handleUserBreak({
+        store,
+        payload: {
+          attendanceId: appState.attendanceId
+        }
+      })
 
-        idleStartedAt = null
-      } catch (err) {
-        console.error(err)
-      }
+      idleStartedAt = null
+
+      setHostSleep('sleep')
+    } catch (err) {
+      console.error(err)
     }
   })
 
   powerMonitor.on('resume', async () => {
     const appState = store.get('appState')
+    console.log("machine wakeup")
 
     if (!appState.currentUserId) return
 
@@ -242,10 +255,28 @@ app.whenReady().then(async () => {
       store.delete('currentSession')
 
       mainWindow?.webContents.send(
-        'user:auto-logout'
+        'app:auto-logout'
       )
 
       return
+    }
+
+    if (
+      session.status === 'break' &&
+      session.attendanceId
+    ) {
+      await handleUserResume({
+        store,
+        payload: {
+          attendanceId: session.attendanceId
+        }
+      })
+      store.set('appState', {
+        ...appState,
+        trackingEnabled: true,
+        attendanceId: session.attendanceId
+      })
+      setHostSleep('resume')
     }
 
     mainWindow?.webContents.send(
