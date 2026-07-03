@@ -4,9 +4,9 @@ import { ChevronLeft, ChevronRight, Search, } from "lucide-react";
 import { DetailedSession } from "../types";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { limitsRange } from "../constants";
 
 
-const limitsRange = [20, 50, 100, 150, 200]
 
 
 export default function ActivityLogTable() {

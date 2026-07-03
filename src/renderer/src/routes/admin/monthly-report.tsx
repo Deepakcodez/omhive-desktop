@@ -23,9 +23,13 @@ import {
     FileText,
     Percent,
     Search,
-    X
+    X,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 import { DetailedSession } from "@renderer/features/admin/types";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { limitsRange } from "@/features/admin/constants";
 
 export const Route = createFileRoute('/admin/monthly-report')({
     component: RouteComponent
@@ -187,10 +191,10 @@ function RouteComponent() {
                     <div className="flex items-center space-x-4">
                         <Link
                             to="/admin"
-                            className="p-2.5 bg-card  text-foreground  rounded-full border border-border transition cursor-pointer flex items-center justify-center shrink-0  "
+                            className="p-2.5 bg-card  text-foreground  rounded-full border-y border-y-border transition cursor-pointer flex items-center justify-center shrink-0  "
                             title="Back to Dashboard"
                         >
-                            <ArrowLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-5 h-5" />
                         </Link>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight text-white">Monthly Report</h1>
@@ -294,71 +298,7 @@ function RouteComponent() {
                     </div>
                 ) : report ? (
                     <div className="space-y-8 animate-fade-in">
-                        {/* Stats Summary Section */}
-                        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {/* Card 1: Attendance Rate */}
-                            <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg transition duration-300">
-                                <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
-                                    <Percent className="w-6 h-6" />
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Attendance Rate</p>
-                                    <h3 className="text-2xl font-bold text-slate-100 mt-1">
-                                        {report.summary?.totalDays > 0
-                                            ? Math.round((report.summary.presentDays / report.summary.totalDays) * 100)
-                                            : 0}%
-                                    </h3>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">
-                                        {report.summary?.presentDays || 0} of {report.summary?.totalDays || 0} days present
-                                    </p>
-                                </div>
-                            </div>
 
-                            {/* Card 2: Total Work Hours */}
-                            <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg transition duration-300">
-                                <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                                    <Clock className="w-6 h-6" />
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Work Time</p>
-                                    <h3 className="text-2xl font-bold text-slate-100 mt-1">
-                                        {formatDuration(report.summary?.totalWorkSeconds || 0)}
-                                    </h3>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">Logged hours this month</p>
-                                </div>
-                            </div>
-
-                            {/* Card 3: Total Break Hours */}
-                            <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg transition duration-300">
-                                <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
-                                    <Coffee className="w-6 h-6" />
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Break Time</p>
-                                    <h3 className="text-2xl font-bold text-slate-100 mt-1">
-                                        {formatDuration(report.summary?.totalBreakSeconds || 0)}
-                                    </h3>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">Break durations this month</p>
-                                </div>
-                            </div>
-
-                            {/* Card 4: Avg Work Day */}
-                            <div className="bg-card border border-border p-5 rounded-2xl flex items-center space-x-4 shadow-lg transition duration-300">
-                                <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
-                                    <Activity className="w-6 h-6" />
-                                </div>
-                                <div className="overflow-hidden">
-                                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Avg Daily Hours</p>
-                                    <h3 className="text-2xl font-bold text-slate-100 mt-1">
-                                        {formatDuration(
-                                            (report.summary?.totalWorkSeconds || 0) /
-                                            (report.summary?.presentDays || 1)
-                                        )}
-                                    </h3>
-                                    <p className="text-[10px] text-slate-500 mt-0.5">Average work session duration</p>
-                                </div>
-                            </div>
-                        </section>
 
                         {/* Visualization Graph */}
                         {chartData.length > 0 && (
@@ -559,10 +499,31 @@ function ActivityModal({
     onClose: () => void
 }) {
     const [activities, setActivities] = useState<DetailedSession[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [page, setPage] = useState(1)
+    const [limit, setLimit] = useState(50)
+    const [total, setTotal] = useState(0)
 
+
+    const totalPages = useMemo(() => {
+        return Math.max(1, Math.ceil(total / limit))
+    }, [total, limit])
+
+
+    const handlePageChange = (action: "next" | "prev") => {
+        if (action === "next") {
+            if (page >= totalPages) return
+            setPage((p) => p + 1)
+        } else {
+            if (page <= 1) return
+            setPage((p) => p - 1)
+        }
+    }
+    useEffect(() => {
+        setPage(1)
+    }, [date])
     useEffect(() => {
         const fetchActivity = async () => {
             setLoading(true);
@@ -572,8 +533,8 @@ function ActivityModal({
                     userId,
                     date,
                     attendanceId: '',
-                    page: 1,
-                    limit: 500
+                    page,
+                    limit
                 });
                 if (response.success && response.data) {
                     setActivities(response.data.data);
@@ -646,11 +607,11 @@ function ActivityModal({
     };
 
     return (
-        <div className=" fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs select-none">
+        <div className=" fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 p-4 bg-black/75 backdrop-blur-xs select-none">
             {/* Click outside to close */}
-            <div className="absolute inset-0 cursor-default" onClick={onClose} />
+            <div className="absolute inset-0 cursor-default " onClick={onClose} />
 
-            <div className="relative w-full max-w-7xl bg-linear-to-b from-white/15 to-card/50 overflow-hidden border border-border  rounded-2xl flex flex-col max-h-[85vh] shadow-2xl z-10 animate-fade-in backdrop-blur-[100px]">
+            <div className="relative w-full max-w-7xl bg-linear-to-b from-white/15 to-card/50 overflow-hidden border border-border/40  rounded-2xl flex flex-col max-h-[85vh] shadow-2xl z-10 animate-fade-in backdrop-blur-[100px]">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-border ">
                     <div>
@@ -663,7 +624,9 @@ function ActivityModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 bg-card border border-border  shadow-lg shadow-white/10  rounded-full transition cursor-pointer flex items-center justify-center"
+                        className="p-2 bg-neutral-400/20  rounded-full transition cursor-pointer flex items-center justify-center active:scale-95
+                        
+                        "
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -714,6 +677,7 @@ function ActivityModal({
                                     <div className=" w-full text-center pb-2 border-b border-border/40">
                                         <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">App Usage Breakdown</h4>
                                     </div>
+
 
                                     <div className="w-full flex">
 
@@ -813,11 +777,145 @@ function ActivityModal({
                                         </table>
                                     </div>
                                 </div>
+
+                                <section className="flex justify-between items-center mt-4">
+                                    <div className="flex items-center gap-4">
+                                        <p className="text-sm text-slate-400">
+                                            Showing{" "}
+                                            {total === 0
+                                                ? 0
+                                                : (page - 1) * limit + 1}
+                                            {" - "}
+                                            {Math.min(page * limit, total)}
+                                            {" of "}
+                                            {total} activities
+                                        </p>
+
+                                        <div className="bg-card border-y border-y-border rounded-full px-2">
+
+                                            <Select onValueChange={(value) => {
+                                                setPage(1)
+                                                setLimit(Number(value))
+                                            }}>
+                                                <SelectTrigger className="w-[180px] border-none outline-none focus:outline-none focus:ring-0 ">
+                                                    <SelectValue placeholder={`${limit} / page`} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        {limitsRange.map((item) => (
+                                                            <SelectItem key={item} value={item.toString()}>
+                                                                {item} / page
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm text-slate-400">
+                                            Page {page} of {totalPages}
+                                        </span>
+                                        <div className="flex  bg-card border-y border-y-border rounded-full">
+                                            <button
+                                                title="Prev Page"
+                                                disabled={page === 1}
+                                                onClick={() =>
+                                                    handlePageChange("prev")
+                                                }
+                                                className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
+                                            >
+                                                <ChevronLeft size={18} />
+                                            </button>
+
+                                            <button
+                                                title="Next Page"
+                                                disabled={page >= totalPages}
+                                                onClick={() =>
+                                                    handlePageChange("next")
+                                                }
+                                                className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
+                                            >
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
+
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            <section className="flex justify-between items-center  w-full max-w-7xl  ">
+                <div className="flex items-center gap-4">
+                    <p className="text-sm text-slate-400">
+                        Showing{" "}
+                        {total === 0
+                            ? 0
+                            : (page - 1) * limit + 1}
+                        {" - "}
+                        {Math.min(page * limit, total)}
+                        {" of "}
+                        {total} activities
+                    </p>
+
+                    <div className="bg-card border-y border-y-border rounded-full px-2">
+
+                        <Select onValueChange={(value) => {
+                            setPage(1)
+                            setLimit(Number(value))
+                        }}>
+                            <SelectTrigger className="w-[180px] border-none outline-none focus:outline-none focus:ring-0 ">
+                                <SelectValue placeholder={`${limit} / page`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    {limitsRange.map((item) => (
+                                        <SelectItem key={item} value={item.toString()}>
+                                            {item} / page
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-slate-400">
+                        Page {page} of {totalPages}
+                    </span>
+                    <div className="flex  bg-card border-y border-y-border rounded-full">
+                        <button
+                            title="Prev Page"
+                            disabled={page === 1}
+                            onClick={() =>
+                                handlePageChange("prev")
+                            }
+                            className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+
+                        <button
+                            title="Next Page"
+                            disabled={page >= totalPages}
+                            onClick={() =>
+                                handlePageChange("next")
+                            }
+                            className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                </div>
+            </section>
+
         </div>
     );
 }

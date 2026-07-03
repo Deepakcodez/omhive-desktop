@@ -10,3 +10,5 @@ export const PALETTE = [
   '#84cc16', // Lime
   '#14b8a6' // Teal
 ]
+
+export const limitsRange = [20, 50, 100, 150, 200]
