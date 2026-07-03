@@ -15,19 +15,15 @@ import {
     Cell
 } from 'recharts';
 import {
-    ArrowLeft,
-    Clock,
-    Coffee,
-    Activity,
+
     AlertCircle,
     FileText,
-    Percent,
+
     Search,
     X,
     ChevronLeft,
     ChevronRight
 } from "lucide-react";
-import { DetailedSession } from "@renderer/features/admin/types";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { limitsRange } from "@/features/admin/constants";
 import { useMonthlyReportStore } from "@/features/admin/store/monthlyReport";

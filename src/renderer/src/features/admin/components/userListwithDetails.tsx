@@ -155,7 +155,9 @@ export default function UserListwithDetails({ onInspectUser }: UserListwithDetai
                                     onSelectDate={(date) => {
                                         setFilterDate(date)
                                         setIsDatePickerOpen(false)
+
                                     }}
+                                    setShowCalender={setIsDatePickerOpen}
                                 />
                                 {filterDate && (
                                     <div className="pt-2 mt-1 border-t border-slate-900/80 flex justify-end">

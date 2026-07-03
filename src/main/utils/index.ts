@@ -1,7 +1,6 @@
 import ElectronStore from 'electron-store'
 import { API_ENDPOINT, HEARTBEAT_CHECK_MS, PERIODIC_CHECK_MS } from '../constants'
 import type { AppState, StoreType, TSession } from '../types'
-import { userInfo } from 'os'
 import { BrowserWindow } from 'electron'
 
 
@@ -176,7 +175,7 @@ export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
 
       })
     }
-  }, 5000)
+  }, HEARTBEAT_CHECK_MS)
 }
 
 export const periodicValidation = (
