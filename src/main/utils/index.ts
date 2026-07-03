@@ -183,13 +183,11 @@ export const periodicValidation = (
   {
     store,
     mainWindow,
-    getCurrentSession,
     clearCurrentSession,
     clearPendingSessions
   }: {
     store: ElectronStore<StoreType>,
     mainWindow: BrowserWindow | null,
-    getCurrentSession: () => TSession | null,
     clearCurrentSession: () => void,
     clearPendingSessions: () => void
   }) => {

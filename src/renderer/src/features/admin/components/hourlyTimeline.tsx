@@ -12,6 +12,7 @@ import {
 
 import { useDailyActivitiesStore } from '../store'
 import { GraphData } from '@shared/types/graph'
+import toast from 'react-hot-toast'
 
 
 
@@ -35,12 +36,7 @@ const formatHour = (timeStr: string) => {
     return `${formattedHour} ${ampm}`
 }
 
-// const formatMinutes = (mins: number) => {
-//     if (mins < 60) return `${mins}m`
-//     const hrs = Math.floor(mins / 60)
-//     const remainingMins = mins % 60
-//     return remainingMins > 0 ? `${hrs}h ${remainingMins}m` : `${hrs}h`
-// }
+
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null
@@ -83,28 +79,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     )
 }
 
-// const CustomPieTooltip = ({ active, payload }: any) => {
-//     if (!active || !payload || !payload.length) return null
-//     const item = payload[0].payload
-//     return (
-//         <div className="bg-[#0f172a]/95 backdrop-blur-md border border-slate-800 rounded-xl p-3 shadow-2xl text-xs flex flex-col gap-1">
-//             <div className="flex items-center gap-2">
-//                 <div
-//                     className="w-2.5 h-2.5 rounded-full"
-//                     style={{ backgroundColor: item.color }}
-//                 />
-//                 <span className="font-semibold text-slate-200">{item.name}</span>
-//             </div>
-//             <div className="text-slate-400 font-medium">
-//                 Time: <span className="text-slate-100 font-semibold">{formatMinutes(item.value)}</span>
-//             </div>
-//         </div>
-//     )
-// }
 
 export default function HourlyTimeline() {
     const { selectedDate, selectedUserId, selectedAttendanceId } = useDailyActivitiesStore()
     const [graphData, setGraphData] = useState<GraphData[] | null>(null)
+
     useEffect(() => {
 
         const fetchGrpahData = async () => {
@@ -114,7 +93,12 @@ export default function HourlyTimeline() {
                 attendanceId: selectedAttendanceId,
             })
             if (data.success && data.data) {
+
+                console.log(data.data.length)
                 setGraphData(data?.data)
+            }
+            if (!data.success) {
+                toast.error(`Something went wrong - ${data.message}`)
             }
         }
 
@@ -220,51 +204,6 @@ export default function HourlyTimeline() {
         return bins
     }, [graphData])
 
-    // const pieChartData = useMemo(() => {
-    //     const map: Record<string, number> = {}
-
-    //     graphData.forEach(
-    //         (item: DetailedSession) => {
-    //             const key =
-    //                 item.software === 'Break' || item.software === 'Idle'
-    //                     ? item.software
-    //                     : (item.activityType === 'break' ? 'Idle' : item.software)
-
-    //             map[key] =
-    //                 (map[key] || 0) +
-    //                 item.duration / 60
-    //         }
-    //     )
-
-    //     return Object.entries(map)
-    //         .map(([name, value]) => ({
-    //             name,
-    //             value: Math.round(value),
-    //             color: appColors[name] || '#475569',
-    //         }))
-    //         .sort((a, b) => b.value - a.value)
-    // }, [graphData, appColors])
-
-    // const totalMinutes = pieChartData.reduce(
-    //     (acc, cur) => acc + cur.value,
-    //     0
-    // )
-
-    // const activeMinutes = pieChartData
-    //     .filter((x) => x.name !== 'Idle' && x.name !== 'Break')
-    //     .reduce(
-    //         (acc, cur) => acc + cur.value,
-    //         0
-    //     )
-
-    // const activeRatio =
-    //     totalMinutes === 0
-    //         ? 0
-    //         : Math.round(
-    //             (activeMinutes /
-    //                 totalMinutes) *
-    //             100
-    //         )
 
     return (
         <div className="grid grid-cols-1 gap-6">
@@ -393,117 +332,7 @@ export default function HourlyTimeline() {
                 </div>
             </div>
 
-            {/* <div className="bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col justify-between">
-                <div>
-                    <h3 className="text-lg font-semibold text-slate-200">
-                        App Distribution
-                    </h3>
 
-                    <p className="text-slate-400 text-xs mt-0.5">
-                        Total time spent per
-                        application.
-                    </p>
-                </div>
-
-                <div className="h-60 relative flex items-center justify-center">
-                    <ResponsiveContainer
-                        width="100%"
-                        height="100%"
-                    >
-                        <PieChart>
-                            <Pie
-                                data={
-                                    pieChartData
-                                }
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={
-                                    65
-                                }
-                                outerRadius={
-                                    85
-                                }
-                                paddingAngle={
-                                    3
-                                }
-                                dataKey="value"
-                            >
-                                {pieChartData.map(
-                                    (
-                                        entry,
-                                        index
-                                    ) => (
-                                        <Cell
-                                            key={
-                                                index
-                                            }
-                                            fill={
-                                                entry.color
-                                            }
-                                        />
-                                    )
-                                )}
-                            </Pie>
-
-                            <Tooltip content={<CustomPieTooltip />} />
-                        </PieChart>
-                    </ResponsiveContainer>
-
-                    <div className="absolute flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-100">
-                            {
-                                activeRatio
-                            }
-                            %
-                        </span>
-
-                        <span className="text-[10px] uppercase text-slate-500">
-                            Active
-                        </span>
-                    </div>
-                </div>
-
-                <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
-                    {pieChartData.map(
-                        (entry) => {
-                            const pct = totalMinutes > 0 ? Math.round((entry.value / totalMinutes) * 100) : 0
-                            return (
-                                <div
-                                    key={
-                                        entry.name
-                                    }
-                                    className="flex justify-between text-xs items-center hover:bg-slate-800/40 px-2 py-1 -mx-2 rounded-md transition-colors"
-                                >
-                                    <div className="flex items-center gap-2 overflow-hidden mr-2">
-                                        <div
-                                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                                            style={{
-                                                backgroundColor:
-                                                    entry.color,
-                                            }}
-                                        />
-
-                                        <span className="truncate text-slate-300 font-medium">
-                                            {
-                                                entry.name
-                                            }
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-normal flex-shrink-0">
-                                            ({pct}%)
-                                        </span>
-                                    </div>
-
-                                    <span className="font-semibold text-slate-200 flex-shrink-0">
-                                        {
-                                            formatMinutes(entry.value)
-                                        }
-                                    </span>
-                                </div>
-                            )
-                        }
-                    )}
-                </div>
-            </div> */}
         </div>
     )
 }

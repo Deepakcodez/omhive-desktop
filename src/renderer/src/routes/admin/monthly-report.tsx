@@ -30,6 +30,7 @@ import {
 import { DetailedSession } from "@renderer/features/admin/types";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { limitsRange } from "@/features/admin/constants";
+import { useMonthlyReportStore } from "@/features/admin/store/monthlyReport";
 
 export const Route = createFileRoute('/admin/monthly-report')({
     component: RouteComponent
@@ -498,13 +499,20 @@ function ActivityModal({
     date: string;
     onClose: () => void
 }) {
-    const [activities, setActivities] = useState<DetailedSession[]>([]);
+    const total = useMonthlyReportStore((s) => s.total)
+    const limit = useMonthlyReportStore((s) => s.limit)
+    const page = useMonthlyReportStore((s) => s.page)
+    const activities = useMonthlyReportStore((s) => s.activities)
+    const searchQuery = useMonthlyReportStore((s) => s.searchQuery)
+
+    const setTotal = useMonthlyReportStore((s) => s.setTotal)
+    const setLimit = useMonthlyReportStore((s) => s.setLimit)
+    const setPage = useMonthlyReportStore((s) => s.setPage)
+    const setActivities = useMonthlyReportStore((s) => s.setActivities)
+    const setSearchQuery = useMonthlyReportStore((s) => s.setSearchQuery)
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [page, setPage] = useState(1)
-    const [limit, setLimit] = useState(50)
-    const [total, setTotal] = useState(0)
 
 
     const totalPages = useMemo(() => {
@@ -515,10 +523,10 @@ function ActivityModal({
     const handlePageChange = (action: "next" | "prev") => {
         if (action === "next") {
             if (page >= totalPages) return
-            setPage((p) => p + 1)
+            setPage(page + 1)
         } else {
             if (page <= 1) return
-            setPage((p) => p - 1)
+            setPage(page - 1)
         }
     }
     useEffect(() => {
@@ -538,18 +546,21 @@ function ActivityModal({
                 });
                 if (response.success && response.data) {
                     setActivities(response.data.data);
+                    setTotal(response.data.total || 0);
                 } else {
                     setError(response.message || "No activity records found.");
+                    setTotal(0);
                 }
             } catch (err: any) {
                 console.error("Error loading activity:", err);
                 setError("Failed to fetch activity logs.");
+                setTotal(0);
             } finally {
                 setLoading(false);
             }
         };
         fetchActivity();
-    }, [userId, date]);
+    }, [userId, date, limit, page]);
 
     const filteredLog = useMemo(() => {
         return activities.filter((s) => {
@@ -624,7 +635,7 @@ function ActivityModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 bg-neutral-400/20  rounded-full transition cursor-pointer flex items-center justify-center active:scale-95
+                        className="p-2 bg-card border-y border-y-border shadow-lg shadow-black/10  rounded-full transition cursor-pointer flex items-center justify-center active:scale-95
                         
                         "
                     >
@@ -635,9 +646,8 @@ function ActivityModal({
                 {/* Search & Actions bar */}
                 {!loading && !error && activities.length > 0 && (
                     <div className="px-6 py-4  flex items-center justify-between border-b border-border/40">
-                        <span className="text-xs text-slate-400">
-                            Showing {filteredLog.length} of {activities.length} activity transitions
-                        </span>
+
+
 
                         <div className="relative w-72">
                             <input
@@ -651,6 +661,73 @@ function ActivityModal({
                                 <Search className="h-3.5 w-3.5" />
                             </div>
                         </div>
+
+                        <section className="flex-1 flex justify-between items-center ml-6">
+                            <div className="flex items-center gap-4">
+                                <p className="text-sm text-slate-400">
+                                    Showing{" "}
+                                    {total === 0
+                                        ? 0
+                                        : (page - 1) * limit + 1}
+                                    {" - "}
+                                    {Math.min(page * limit, total)}
+                                    {" of "}
+                                    {total} activities
+                                </p>
+
+                                <div className="bg-card border-y border-y-border rounded-full px-2 shadow-lg shadow-black/10">
+
+                                    <Select onValueChange={(value) => {
+                                        setPage(1)
+                                        setLimit(Number(value))
+                                    }}>
+                                        <SelectTrigger className="w-[180px] border-none outline-none focus:outline-none focus:ring-0 ">
+                                            <SelectValue placeholder={`${limit} / page`} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {limitsRange.map((item) => (
+                                                    <SelectItem key={item} value={item.toString()}>
+                                                        {item} / page
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm text-slate-400">
+                                    Page {page} of {totalPages}
+                                </span>
+                                <div className="flex  bg-card border-y border-y-border rounded-full shadow-lg shadow-black/10">
+                                    <button
+                                        title="Prev Page"
+                                        disabled={page === 1}
+                                        onClick={() =>
+                                            handlePageChange("prev")
+                                        }
+                                        className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
+                                    >
+                                        <ChevronLeft size={18} />
+                                    </button>
+
+                                    <button
+                                        title="Next Page"
+                                        disabled={page >= totalPages}
+                                        onClick={() =>
+                                            handlePageChange("next")
+                                        }
+                                        className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
+                                    >
+                                        <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
                 )}
 
@@ -670,16 +747,16 @@ function ActivityModal({
                             <span className="text-sm font-semibold">No activity logs recorded for this day.</span>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1  gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Left Column: App Breakdown Pie Chart */}
-                            <div className="lg:col-span-1 ">
-                                <div className="bg-card/20 border border-border rounded-xl p-5 flex flex-col justify-between items-center h-full">
+                            <div className="lg:col-span-1 relative">
+                                <div className="sticky top-0 bg-linear-to-b from-white/10 via-card to-card border border-border rounded-xl p-5 flex flex-col justify-between items-center h-fit">
                                     <div className=" w-full text-center pb-2 border-b border-border/40">
                                         <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">App Usage Breakdown</h4>
                                     </div>
 
 
-                                    <div className="w-full flex">
+                                    <div className="w-full flex ">
 
                                         <div className="h-44 w-6/12 relative flex items-center justify-center my-4 shrink-0">
                                             <ResponsiveContainer width="100%" height="100%">
@@ -778,71 +855,7 @@ function ActivityModal({
                                     </div>
                                 </div>
 
-                                <section className="flex justify-between items-center mt-4">
-                                    <div className="flex items-center gap-4">
-                                        <p className="text-sm text-slate-400">
-                                            Showing{" "}
-                                            {total === 0
-                                                ? 0
-                                                : (page - 1) * limit + 1}
-                                            {" - "}
-                                            {Math.min(page * limit, total)}
-                                            {" of "}
-                                            {total} activities
-                                        </p>
 
-                                        <div className="bg-card border-y border-y-border rounded-full px-2">
-
-                                            <Select onValueChange={(value) => {
-                                                setPage(1)
-                                                setLimit(Number(value))
-                                            }}>
-                                                <SelectTrigger className="w-[180px] border-none outline-none focus:outline-none focus:ring-0 ">
-                                                    <SelectValue placeholder={`${limit} / page`} />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                        {limitsRange.map((item) => (
-                                                            <SelectItem key={item} value={item.toString()}>
-                                                                {item} / page
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-sm text-slate-400">
-                                            Page {page} of {totalPages}
-                                        </span>
-                                        <div className="flex  bg-card border-y border-y-border rounded-full">
-                                            <button
-                                                title="Prev Page"
-                                                disabled={page === 1}
-                                                onClick={() =>
-                                                    handlePageChange("prev")
-                                                }
-                                                className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
-                                            >
-                                                <ChevronLeft size={18} />
-                                            </button>
-
-                                            <button
-                                                title="Next Page"
-                                                disabled={page >= totalPages}
-                                                onClick={() =>
-                                                    handlePageChange("next")
-                                                }
-                                                className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
-                                            >
-                                                <ChevronRight size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </section>
 
                             </div>
                         </div>
@@ -850,71 +863,7 @@ function ActivityModal({
                 </div>
             </div>
 
-            <section className="flex justify-between items-center  w-full max-w-7xl  ">
-                <div className="flex items-center gap-4">
-                    <p className="text-sm text-slate-400">
-                        Showing{" "}
-                        {total === 0
-                            ? 0
-                            : (page - 1) * limit + 1}
-                        {" - "}
-                        {Math.min(page * limit, total)}
-                        {" of "}
-                        {total} activities
-                    </p>
 
-                    <div className="bg-card border-y border-y-border rounded-full px-2">
-
-                        <Select onValueChange={(value) => {
-                            setPage(1)
-                            setLimit(Number(value))
-                        }}>
-                            <SelectTrigger className="w-[180px] border-none outline-none focus:outline-none focus:ring-0 ">
-                                <SelectValue placeholder={`${limit} / page`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {limitsRange.map((item) => (
-                                        <SelectItem key={item} value={item.toString()}>
-                                            {item} / page
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-400">
-                        Page {page} of {totalPages}
-                    </span>
-                    <div className="flex  bg-card border-y border-y-border rounded-full">
-                        <button
-                            title="Prev Page"
-                            disabled={page === 1}
-                            onClick={() =>
-                                handlePageChange("prev")
-                            }
-                            className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-
-                        <button
-                            title="Next Page"
-                            disabled={page >= totalPages}
-                            onClick={() =>
-                                handlePageChange("next")
-                            }
-                            className="hover:bg-white/10 rounded-full p-2 disabled:opacity-50"
-                        >
-                            <ChevronRight size={18} />
-                        </button>
-                    </div>
-                </div>
-            </section>
 
         </div>
     );

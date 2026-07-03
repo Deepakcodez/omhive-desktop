@@ -191,8 +191,7 @@ app.whenReady().then(async () => {
 
   periodicValidation({
     store,
-    mainWindow
-    getCurrentSession: () => currentSession,
+    mainWindow,
     clearCurrentSession: () => {
       currentSession = null
     },

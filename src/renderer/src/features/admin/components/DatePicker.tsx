@@ -225,17 +225,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 bg-white/10 cursor-pointer hover:bg-white/20 text-white rounded-full transition"
+            className="size-7 flex justify-center items-center bg-white/10 cursor-pointer hover:bg-white/20 text-white rounded-full transition"
           >
-            <ChevronLeft />
+            <ChevronLeft size={15} />
           </button>
 
           <button
             type="button"
             onClick={handleNextMonth}
-            className="p-1.5 bg-white/10 cursor-pointer hover:bg-white/20 text-white rounded-full transition"
+            className="size-7 flex justify-center items-center bg-white/10 cursor-pointer hover:bg-white/20 text-white rounded-full transition"
           >
-            <ChevronRight />
+            <ChevronRight size={15} />
 
           </button>
         </div>
