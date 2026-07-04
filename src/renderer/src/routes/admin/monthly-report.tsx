@@ -25,8 +25,10 @@ import {
     ChevronRight
 } from "lucide-react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { limitsRange } from "@/features/admin/constants";
+import { limitsRange, MONTHS } from "@/features/admin/constants";
 import { useMonthlyReportStore } from "@/features/admin/store/monthlyReport";
+import SelectYear from "@/features/admin/components/SelectYear";
+import SelectMonth from "@/features/admin/components/selectMonth";
 
 export const Route = createFileRoute('/admin/monthly-report')({
     component: RouteComponent
@@ -41,29 +43,15 @@ const getMonthlyRePort = async ({ userId, month, year }: { userId: string, month
     }
 }
 
-const MONTHS = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' }
-];
 
 function RouteComponent() {
+    const year = useMonthlyReportStore((state) => state.year)
+    const month = useMonthlyReportStore((state) => state.month)
+
     const [users, setUsers] = useState<User[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [selectedUsername, setSelectedUsername] = useState<string>("");
-    const currentLocalDate = new Date();
-    const [month, setMonth] = useState<number>(() => currentLocalDate.getMonth() + 1);
-    const [year, setYear] = useState<number>(() => currentLocalDate.getFullYear());
 
     const [report, setReport] = useState<any>(null);
     const [loadingReport, setLoadingReport] = useState(false);
@@ -155,10 +143,7 @@ function RouteComponent() {
     };
 
     // Year choices (currentYear - 2 to currentYear + 1)
-    const yearsList = useMemo(() => {
-        const curYear = new Date().getFullYear();
-        return [curYear - 2, curYear - 1, curYear, curYear + 1];
-    }, []);
+
 
     const chartData = useMemo(() => {
         if (!report || !report.attendance) return [];
@@ -184,7 +169,7 @@ function RouteComponent() {
         <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-200 select-none pb-12">
             <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-8">
                 {/* Header */}
-                <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-border pb-6">
+                <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4  pb-6">
                     <div className="flex items-center space-x-4">
                         <Link
                             to="/admin"
@@ -214,56 +199,17 @@ function RouteComponent() {
                         </div>
 
                         {/* Month Select */}
-                        <div className="flex flex-col space-y-1.5 min-w-[130px]">
-                            <label className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                                Month
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={month}
-                                    onChange={(e) => setMonth(Number(e.target.value))}
-                                    className="appearance-none w-full bg-card border border-border text-foreground px-4 py-2.5 pr-10 rounded-xl font-medium text-sm cursor-pointer shadow-lg transition  focus:outline-none"
-                                >
-                                    {MONTHS.map((m) => (
-                                        <option key={m.value} value={m.value}>
-                                            {m.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 border-l border-border">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
+                        <SelectMonth />
 
                         {/* Year Select */}
-                        <div className="flex flex-col space-y-1.5 min-w-[100px]">
-                            <label className="text-foreground text-xs font-semibold uppercase tracking-wider">
-                                Year
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={year}
-                                    onChange={(e) => setYear(Number(e.target.value))}
-                                    className="appearance-none w-full bg-card border border-border text-foreground px-4 py-2.5 pr-10 rounded-xl font-medium text-sm cursor-pointer shadow-lg transition  focus:outline-none"
-                                >
-                                    {yearsList.map((y) => (
-                                        <option key={y} value={y}>
-                                            {y}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 border-l border-border">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
+                        <SelectYear />
                     </div>
                 </header>
+
+
+
+
+
 
                 {/* Dashboard body */}
                 {reportError && (
@@ -282,7 +228,7 @@ function RouteComponent() {
                         <p className="text-slate-400 text-sm font-medium">Fetching monthly attendance report...</p>
                     </div>
                 ) : !selectedUserId ? (
-                    <div className="bg-card border border-border rounded-2xl p-20 flex flex-col items-center justify-center text-center space-y-5 shadow-lg max-w-2xl mx-auto my-12">
+                    <div className="bg-card border border-border rounded-2xl p-20 flex flex-col items-center justify-center text-center space-y-5 shadow-lg max-w-7xl mx-auto my-12">
                         <div className="p-4 bg-slate-900/60 rounded-full border border-slate-800 text-indigo-400 shadow-inner">
                             <FileText className="w-12 h-12" />
                         </div>
@@ -651,7 +597,7 @@ function ActivityModal({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search application or title..."
-                                className="w-full bg-card border border-border text-foreground text-xs px-3.5 py-1.5 pl-8 rounded-full focus:outline-none placeholder-foreground/45 transition"
+                                className="w-full bg-card border-y border-border text-foreground text-xs px-3.5 py-2 pl-8 rounded-full focus:outline-none placeholder-foreground/45 transition"
                             />
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                                 <Search className="h-3.5 w-3.5" />

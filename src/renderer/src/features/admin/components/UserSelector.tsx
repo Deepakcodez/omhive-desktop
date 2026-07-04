@@ -1,3 +1,4 @@
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import React from 'react'
 
 export interface User {
@@ -24,15 +25,12 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
   loading = false
 }) => {
   return (
-    <div className="flex flex-col space-y-1.5 w-full">
-      <label className="text-foreground text-xs font-semibold uppercase tracking-wider">
-        Select User
-      </label>
+    <div className="flex flex-col  w-full">
+
       <div className="relative w-full">
-        <select
+        <Select
           value={selectedUserId}
-          onChange={(e) => {
-            const val = e.target.value
+          onValueChange={(val) => {
             onSelectUser(val)
             if (setUsername) {
               const matched = users.find((u) => u.id === val)
@@ -42,26 +40,23 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
             }
           }}
           disabled={loading}
-          className="appearance-none w-full bg-card border border-border text-slate-200 px-4 py-2.5 pr-10 rounded-xl font-medium focus:outline-none text-sm cursor-pointer shadow-lg transition disabled:opacity-50"
         >
-          <option value="" disabled>
-            {loading ? 'Loading users...' : 'Choose a user'}
-          </option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.fullName || user.userName} (@{user.userName})
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 border-l border-border">
-          <svg
-            className="fill-current h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
+          <SelectTrigger
+            className="w-full bg-card border-y border-y-border text-slate-200 px-4 py-2.5  rounded-full font-medium focus:outline-none text-sm cursor-pointer shadow-lg transition disabled:opacity-50"
           >
-            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-          </svg>
-        </div>
+            <SelectValue placeholder={loading ? 'Loading users...' : 'Choose a user'} />
+          </SelectTrigger>
+          <SelectContent className='bg-card/40 backdrop-blur-md border border-border/50'>
+            <SelectGroup>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.fullName || user.userName} (@{user.userName})
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
       </div>
     </div>
   )

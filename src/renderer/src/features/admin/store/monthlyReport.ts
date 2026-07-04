@@ -13,9 +13,14 @@ type Store = {
     setActivities: (session: DetailedSession[]) => void
     searchQuery: string,
     setSearchQuery: (query: string) => void
+    year: number
+    setYear: (data: number) => void
+    month : number
+    setMonth : (data: number) => void
 
 
 }
+const currentLocalDate = new Date();
 
 export const useMonthlyReportStore = create<Store>()((set) => ({
     total: 0,
@@ -30,7 +35,13 @@ export const useMonthlyReportStore = create<Store>()((set) => ({
     activities: [],
     setActivities: (data) => set(({ activities: data })),
     searchQuery: '',
-    setSearchQuery: (data) => set(({ searchQuery: data }))
+    setSearchQuery: (data) => set(({ searchQuery: data })),
+    year: currentLocalDate.getFullYear(),
+    setYear: (data) => set(({ year: data })),
+    month : currentLocalDate.getMonth() + 1,
+    setMonth : (data) => set(({ month: data })),
+
+
 
 
 
