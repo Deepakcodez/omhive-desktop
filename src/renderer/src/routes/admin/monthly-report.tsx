@@ -15,10 +15,8 @@ import {
     Cell
 } from 'recharts';
 import {
-
     AlertCircle,
     FileText,
-
     Search,
     X,
     ChevronLeft,
@@ -564,7 +562,7 @@ function ActivityModal({
             {/* Click outside to close */}
             <div className="absolute inset-0 cursor-default " onClick={onClose} />
 
-            <div className="relative w-full max-w-7xl bg-linear-to-b from-white/15 to-card/50 overflow-hidden border border-border/40  rounded-2xl flex flex-col max-h-[85vh] shadow-2xl z-10 animate-fade-in backdrop-blur-[100px]">
+            <div className="relative w-full max-w-370 bg-linear-to-b from-white/15 to-card/50 overflow-hidden border border-border/40  rounded-2xl flex flex-col max-h-[85vh] shadow-2xl z-10 animate-fade-in backdrop-blur-[100px]">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-border ">
                     <div>

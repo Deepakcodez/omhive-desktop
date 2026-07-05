@@ -144,3 +144,13 @@ body,
   background: #555;
   /* color on hover */
 }
+
+.inner-shadow-text {
+  font-weight: bold;
+  color: transparent;
+  background-color: #ffffff; /* Text base color */
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* Syntax: offset-x | offset-y | blur-radius | color */
+  text-shadow: 1px 1px 3.5px rgba(0, 0, 0, 0.9); 
+}

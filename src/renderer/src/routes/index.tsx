@@ -1,6 +1,9 @@
+import Button from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import RerfreshAppState from '@/features/user/components/RerfreshAppState'
 import { cn } from '@renderer/lib/utils'
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { Menu, RotateCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -281,11 +284,13 @@ function RouteComponent() {
           <Spinner />
         </div> :
           <div className="min-h-screen bg-background flex flex-col gap-4 items-center justify-center p-4 select-none">
+            <RerfreshAppState />
             <div className='flex flex-col  justify-center items-center'>
-              <h2 className="text-[10vw] leading-none font-bold mt-2 text-white/20">
-                {currentTime.toLocaleTimeString()}
+              <h2 className=" text-[12vw] inner-shadow-text ">
+                {currentTime.toLocaleTimeString().slice(0, 4)}
+                <span className="text-primary text-xl">{currentTime.toLocaleTimeString().slice(7, 12)}</span>
               </h2>
-              <div className='bg-linear-to-b from-white/30 to-card w-fit px-2 border-t border-t-white/30 rounded-full  '>
+              <div className='bg-card w-fit px-2 border-y border-y-white/30 rounded-full  '>
                 <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
               </div>
             </div>

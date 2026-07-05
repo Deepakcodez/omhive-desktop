@@ -11,6 +11,7 @@ import { cn } from '@renderer/lib/utils'
 import { DatePicker } from './DatePicker'
 import { useDailyActivitiesStore } from '../store'
 import { Link } from '@tanstack/react-router'
+import Button from '@/components/ui/button'
 
 const fetchDailyAttendance = async (date: string): Promise<TUserAttendance[]> => {
     const res = await window.api.dailyAttendance({
@@ -83,17 +84,22 @@ export default function DailyAttendance() {
                 <div className='flex gap-1 items-center'>
                     <Link
                         to="/admin/monthly-report"
-                        title='Monthly Report'
-                        className='bg-card rounded-full px-4 py-2 border-y border-y-border text-sm cursor-default'>
-                        See Monthly Report
+                    >
+                        <Button
+                            title='Monthly Report'
+
+                        >
+                            See Monthly Report
+                        </Button>
                     </Link>
                     <div className='relative'>
 
-                        <button
+                        <Button
+                            title='Open Calender'
                             onClick={() => setShowCalender(!isShowCalender)}
-                            className='p-2 rounded-full bg-card border-y border-y-white/30 active:scale-95 duration-300'>
+                        >
                             <Calendar size={18} />
-                        </button>
+                        </Button>
                         <Activity mode={isShowCalender ? 'visible' : 'hidden'}>
                             <div className='absolute z-10 mt-2 -right-8  shrink-0 w-max'>
                                 <DatePicker
@@ -104,13 +110,13 @@ export default function DailyAttendance() {
                             </div>
                         </Activity>
                     </div>
-                    <button
-                        title='Refetch Data'
+                    <Button
+                        title='Refresh Attendance'
                         onClick={() => setRefetch((prev) => !prev)}
-                        className='group p-2 rounded-full bg-card border-y border-y-white/30 active:scale-95 duration-300'
+                        className='group '
                     >
                         <RotateCw size={18} className='group-active:animate-spin' />
-                    </button>
+                    </Button>
                 </div>
             </div>
             {attendance.map((user, i) => {
