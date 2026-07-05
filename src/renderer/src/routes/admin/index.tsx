@@ -4,6 +4,8 @@ import DailyAttendance from '@renderer/features/admin/components/DailyAttendance
 import ActivityLogTable from '@renderer/features/admin/components/ActivityLogTable'
 import Button from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
+import Errorpage from '@/components/Error-page'
+import PendingPage from '@/components/PendingPage'
 
 
 
@@ -11,7 +13,9 @@ import { ChevronLeft } from 'lucide-react'
 
 
 export const Route = createFileRoute('/admin/')({
-  component: RouteComponent
+  component: RouteComponent,
+  errorComponent: ({ reset, error }) => <Errorpage error={error} reset={reset} />,
+  pendingComponent: () => <PendingPage />
 })
 
 

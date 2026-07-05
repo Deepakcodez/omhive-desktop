@@ -3,7 +3,6 @@ import { Spinner } from '@/components/ui/spinner'
 import RerfreshAppState from '@/features/user/components/RerfreshAppState'
 import { cn } from '@renderer/lib/utils'
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
-import { Menu, RotateCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -30,6 +29,14 @@ function RouteComponent() {
 
     return () => clearInterval(timer)
   }, [])
+
+  const time = currentTime.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  const [hm, period] = time.split(" ");
 
   useEffect(() => {
     const unsubscribe =
@@ -287,8 +294,8 @@ function RouteComponent() {
             <RerfreshAppState />
             <div className='flex flex-col  justify-center items-center'>
               <h2 className=" text-[12vw] inner-shadow-text ">
-                {currentTime.toLocaleTimeString().slice(0, 4)}
-                <span className="text-primary text-xl">{currentTime.toLocaleTimeString().slice(7, 12)}</span>
+                {hm}
+                <span className="text-primary text-xl">{period}</span>
               </h2>
               <div className='bg-card w-fit px-2 border-y border-y-white/30 rounded-full  '>
                 <p className=" text-white/40 text-end">{currentTime.toLocaleDateString()}</p>
@@ -300,7 +307,7 @@ function RouteComponent() {
 
               {/* Username */}
               {(!user?.name || !user.id) && (
-                <div className="mb-6">
+                <div className="mb-6 perspective-[1000px]">
                   <label className="block mb-2 font-medium text-foreground">Username</label>
 
                   <input
@@ -308,7 +315,7 @@ function RouteComponent() {
                     placeholder="Enter username"
                     value={inputUserName}
                     onChange={(e) => setInputUserName(e.target.value)}
-                    className="w-full   bg-foreground/10 p-3 outline-none rounded-full   "
+                    className="w-full border-y border-t-white/30 border-b-white/30  bg-foreground/10 p-3 outline-none rounded-full transform-gpu  duration-300 ease-out focus:translate-z-6 focus:shadow-lg shadow-black/30 "
                   />
                 </div>
               )}
