@@ -1,4 +1,3 @@
-import Button from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import RerfreshAppState from '@/features/user/components/RerfreshAppState'
 import { cn } from '@renderer/lib/utils'

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, powerMonitor } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, powerMonitor, powerSaveBlocker } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -30,6 +30,7 @@ let pendingSessions: TSession[] = []
 let mainWindow: BrowserWindow | null = null
 let idleStartedAt: number | null = null
 let askingClose = false
+let blockerId: number | null = null;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 // not current session  return null
@@ -158,6 +159,13 @@ app.whenReady().then(async () => {
           currentUserId: userInfo.userId,
           attendanceId: session.attendanceId || userInfo.attendanceId
         })
+        const appState = store.get("appState");
+
+        if (appState.trackingEnabled && blockerId === null) {
+          blockerId = powerSaveBlocker.start("prevent-app-suspension");
+          console.log("Power blocker started");
+        }
+
       }
       else {
         store.set('appState', {
@@ -189,6 +197,17 @@ app.whenReady().then(async () => {
     }
   }
 
+  setInterval(async () => {
+    console.clear();
+
+    console.log("Idle:", powerMonitor.getSystemIdleTime());
+
+    const win = await activeWindow();
+
+    console.log(win?.title);
+    console.log(win?.owner?.name);
+  }, 1000);
+
   periodicValidation({
     store,
     mainWindow,
@@ -202,7 +221,6 @@ app.whenReady().then(async () => {
 
   powerMonitor.on('suspend', async () => {
     const appState = store.get('appState')
-    console.log("<><><><><><><><><><><><><><><> machine is sleeping <><><><><><><><><><><><><><><>")
     if (!appState.trackingEnabled) return
     if (!appState.attendanceId) return
 
@@ -247,7 +265,11 @@ app.whenReady().then(async () => {
         attendanceId: '',
         appInitialized: true
       })
-
+      if (blockerId !== null) {
+        powerSaveBlocker.stop(blockerId);
+        blockerId = null;
+        console.log("Power blocker stopped");
+      }
       currentSession = null
       pendingSessions = []
 
@@ -491,6 +513,12 @@ app.whenReady().then(async () => {
 
 // Flush any open session before quitting
 app.on('before-quit', () => {
+  if (
+    blockerId !== null &&
+    powerSaveBlocker.isStarted(blockerId)
+  ) {
+    powerSaveBlocker.stop(blockerId);
+  }
   const closed = closeCurrentSession()
   if (closed) syncToServer([closed])
 })
