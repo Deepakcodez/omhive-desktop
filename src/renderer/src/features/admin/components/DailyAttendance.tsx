@@ -82,6 +82,15 @@ export default function DailyAttendance() {
                     </div>
                 </div>
                 <div className='flex gap-1 items-center'>
+                    <Link to='/admin/add-user' >
+                        <Button
+                            title='Add User'
+
+                        >
+                            Add User
+                        </Button>
+                    </Link>
+
                     <Link
                         to="/admin/monthly-report"
                     >
@@ -92,6 +101,7 @@ export default function DailyAttendance() {
                             See Monthly Report
                         </Button>
                     </Link>
+
                     <div className='relative'>
 
                         <Button

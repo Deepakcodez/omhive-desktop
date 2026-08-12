@@ -82,6 +82,15 @@ interface Api {
     systemUsername: string
     timezone: string
   }>
+  createUser: (payload: { userName: string, fullName: string, phone: string }) => Promise<{
+    data: {
+      userName: string
+      fullName: string
+      phone: string
+    }
+    success: boolean
+    message: string
+  }>
   listUser: () => Promise<{
     data: {
       id: string;

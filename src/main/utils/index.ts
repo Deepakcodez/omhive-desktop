@@ -24,7 +24,6 @@ export function updateAppState(
 }
 
 
-
 export async function syncToServer(sessions: TSession[]): Promise<void> {
   try {
     const res = await fetch(`${API_ENDPOINT}/activity`, {

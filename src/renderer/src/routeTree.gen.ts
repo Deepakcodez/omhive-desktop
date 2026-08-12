@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminMonthlyReportRouteImport } from './routes/admin/monthly-report'
+import { Route as AdminAddUserIndexRouteImport } from './routes/admin/add-user/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,49 @@ const AdminMonthlyReportRoute = AdminMonthlyReportRouteImport.update({
   path: '/admin/monthly-report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAddUserIndexRoute = AdminAddUserIndexRouteImport.update({
+  id: '/admin/add-user/',
+  path: '/admin/add-user/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/monthly-report': typeof AdminMonthlyReportRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/add-user/': typeof AdminAddUserIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/monthly-report': typeof AdminMonthlyReportRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/add-user': typeof AdminAddUserIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/monthly-report': typeof AdminMonthlyReportRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/add-user/': typeof AdminAddUserIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin/monthly-report' | '/admin/'
+  fullPaths: '/' | '/admin/monthly-report' | '/admin/' | '/admin/add-user/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin/monthly-report' | '/admin'
-  id: '__root__' | '/' | '/admin/monthly-report' | '/admin/'
+  to: '/' | '/admin/monthly-report' | '/admin' | '/admin/add-user'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin/monthly-report'
+    | '/admin/'
+    | '/admin/add-user/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminMonthlyReportRoute: typeof AdminMonthlyReportRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminAddUserIndexRoute: typeof AdminAddUserIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +97,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMonthlyReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/add-user/': {
+      id: '/admin/add-user/'
+      path: '/admin/add-user'
+      fullPath: '/admin/add-user/'
+      preLoaderRoute: typeof AdminAddUserIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +111,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminMonthlyReportRoute: AdminMonthlyReportRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminAddUserIndexRoute: AdminAddUserIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

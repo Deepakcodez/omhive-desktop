@@ -25,6 +25,7 @@ const api = {
   listUserWithLoginLogout: (payload: { date: string }) => ipcRenderer.invoke('user:with-login-logout', payload),
   dailyAttendance: (payload: { date: string }): Promise<DailyAttendanceResponse> => ipcRenderer.invoke('attendance:daily-attendance', payload),
   getUserMonthlyReport: (payload: { month: number, year: number, userId: string }) => ipcRenderer.invoke('user:attendance', payload),
+  createUser: (payload: { fullName: string, phone: string, userName: string }) => ipcRenderer.invoke('admin:create-user', payload),
   loginUser: (payload: {
     username: string
     hostname: string

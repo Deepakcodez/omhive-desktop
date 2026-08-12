@@ -4,6 +4,7 @@ import { StoreType } from '../types'
 import { ActivityIpc } from './activity'
 import type ElectronStore from 'electron-store'
 import { AttendanceIpc } from './attendance'
+import { AdminIpc } from './admin'
 
 export function IPC_Handlers({
   store,
@@ -14,4 +15,5 @@ export function IPC_Handlers({
   ActivityIpc()
   AttendanceIpc()
   AlertIpc()
+  AdminIpc()
 }
