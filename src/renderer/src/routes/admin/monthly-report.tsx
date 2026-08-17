@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { User, UserSelector } from "../../features/admin/components/UserSelector";
 import {
@@ -27,6 +27,7 @@ import { limitsRange, MONTHS } from "@/features/admin/constants";
 import { useMonthlyReportStore } from "@/features/admin/store/monthlyReport";
 import SelectYear from "@/features/admin/components/SelectYear";
 import SelectMonth from "@/features/admin/components/selectMonth";
+import Button from "@/components/ui/button";
 
 export const Route = createFileRoute('/admin/monthly-report')({
     component: RouteComponent
@@ -43,6 +44,7 @@ const getMonthlyRePort = async ({ userId, month, year }: { userId: string, month
 
 
 function RouteComponent() {
+    const router = useRouter();
     const year = useMonthlyReportStore((state) => state.year)
     const month = useMonthlyReportStore((state) => state.month)
 
@@ -169,13 +171,12 @@ function RouteComponent() {
                 {/* Header */}
                 <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4  pb-6">
                     <div className="flex items-center space-x-4">
-                        <Link
-                            to="/admin"
-                            className="p-2.5 bg-card  text-foreground  rounded-full border-y border-y-border transition cursor-pointer flex items-center justify-center shrink-0  "
-                            title="Back to Dashboard"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                        </Link>
+                        <Button
+                            onClick={() => router.history.back()}
+                            title='Back'
+                            className='aspect-square p-1.5 fixed top-2 left-2 '>
+                            <ChevronLeft />
+                        </Button>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight text-white">Monthly Report</h1>
                             <p className="text-slate-400 text-sm mt-0.5">

@@ -173,7 +173,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
 
   ipcMain.handle('user:list', async () => {
     try {
-      const response = await fetch(API_ENDPOINT + '/user/list', {
+      const response = await fetch(API_ENDPOINT + '/admin/user-list', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

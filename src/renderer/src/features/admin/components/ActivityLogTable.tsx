@@ -74,7 +74,7 @@ export default function ActivityLogTable() {
         <div className="space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                    <h3 className="text-lg font-semibold text-foreground">Chronological Activity Log</h3>
+                    <h3 className="text-lg font-semibold text-foreground">Activity Log</h3>
                     <p className="text-slate-400 text-xs mt-0.5">
                         Detailed window transition events for the day.
                     </p>
@@ -94,84 +94,83 @@ export default function ActivityLogTable() {
                     </div>
                 </div>
             </div>
-
-            <section className="bg-card border border-border rounded-2xl p-6 shadow-xl space-y-4">
-
-
-                <div className="border border-border rounded-xl overflow-hidden bg-card">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-border bg-card text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                                    <th className="py-3.5 px-4">Time Window</th>
-                                    <th className="py-3.5 px-4">Application</th>
-                                    <th className="py-3.5 px-4">Window Title</th>
-                                    <th className="py-3.5 px-4 text-right">Duration</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/50 text-xs text-slate-300">
-                                {
+            <div className="p-2 bg-card   border border-border rounded-2xl  shadow-xl">
+                <section className=" h-120  space-y-4 overflow-y-auto hide-scroll">
+                    <div className=" overflow-hidden bg-card">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-border bg-card text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                                        <th className="py-3.5 px-4">Time Window</th>
+                                        <th className="py-3.5 px-4">Application</th>
+                                        <th className="py-3.5 px-4">Window Title</th>
+                                        <th className="py-3.5 px-4 text-right">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800/50 text-xs text-slate-300">
+                                    {
                                         loading ? (
-                                        <tr>
-                                            <td colSpan={4} className=" h-120 py-8 text-center text-foreground font-medium">
-                                                <div className="flex flex-col items-center justify-center gap-2">
-                                                    <Spinner />
-                                                    Fetching User Activities...
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )
-                                        : displayedLog.length === 0 ? (
                                             <tr>
-                                                <td colSpan={4} className="py-8 text-center text-slate-500 font-medium">
-                                                    No matching sessions found.
+                                                <td colSpan={4} className=" h-120 py-8 text-center text-foreground font-medium">
+                                                    <div className="flex flex-col items-center justify-center gap-2">
+                                                        <Spinner />
+                                                        Fetching User Activities...
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        ) : (
-                                            displayedLog.map((session, idx: number) => {
-                                                const startTimeStr = new Date(session.startTime).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    second: '2-digit'
-                                                })
-                                                const endTimeStr = new Date(session.endTime).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    second: '2-digit'
-                                                })
+                                        )
+                                            : displayedLog.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={4} className="py-8 text-center text-slate-500 font-medium">
+                                                        No matching sessions found.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                displayedLog.map((session, idx: number) => {
+                                                    const startTimeStr = new Date(session.startTime).toLocaleTimeString([], {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        second: '2-digit'
+                                                    })
+                                                    const endTimeStr = new Date(session.endTime).toLocaleTimeString([], {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        second: '2-digit'
+                                                    })
 
-                                                const min = Math.floor(session.duration / 60)
-                                                const sec = Math.round(session.duration % 60)
-                                                const durStr = min > 0 ? `${min}m ${sec}s` : `${sec}s`
+                                                    const min = Math.floor(session.duration / 60)
+                                                    const sec = Math.round(session.duration % 60)
+                                                    const durStr = min > 0 ? `${min}m ${sec}s` : `${sec}s`
 
-                                                return (
-                                                    <tr key={idx} className="hover:bg-slate-900/20 transition duration-150">
-                                                        <td className="py-3.5 px-4 font-mono text-slate-400">
-                                                            {startTimeStr} - {endTimeStr}
-                                                        </td>
-                                                        <td className="py-3.5 px-4 font-semibold text-indigo-300">
-                                                            {session.software}
-                                                        </td>
-                                                        <td
-                                                            className="py-3.5 px-4 truncate max-w-xs sm:max-w-md md:max-w-lg"
-                                                            title={session.title}
-                                                        >
-                                                            {session.title || (
-                                                                <span className="text-slate-600 italic">No Title</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-3.5 px-4 text-right font-bold text-slate-200">
-                                                            {durStr}
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            })
-                                        )}
-                            </tbody>
-                        </table>
+                                                    return (
+                                                        <tr key={idx} className="hover:bg-slate-900/20 transition duration-150">
+                                                            <td className="py-3.5 px-4 font-mono text-slate-400">
+                                                                {startTimeStr} - {endTimeStr}
+                                                            </td>
+                                                            <td className="py-3.5 px-4 font-semibold text-indigo-300">
+                                                                {session.software}
+                                                            </td>
+                                                            <td
+                                                                className="py-3.5 px-4 truncate max-w-xs sm:max-w-md md:max-w-lg"
+                                                                title={session.title}
+                                                            >
+                                                                {session.title || (
+                                                                    <span className="text-slate-600 italic">No Title</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-3.5 px-4 text-right font-bold text-slate-200">
+                                                                {durStr}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })
+                                            )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </div>
 
             <section className="flex justify-between items-center mt-4">
                 <div className="flex items-center gap-4">

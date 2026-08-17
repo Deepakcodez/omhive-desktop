@@ -66,14 +66,14 @@ export default function DailyAttendance() {
 
     if (loading) {
         return (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
+            <div className="flex h-100 bg-card  rounded-2xl items-center justify-center text-muted-foreground">
                 Loading...
             </div>
         )
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-2 ">
             <div className='flex justify-between items-center'>
                 <div className='flex gap-2 items-center justify-center'>
                     <h2 className='text-2xl'>Daily Attendance</h2>
@@ -129,171 +129,176 @@ export default function DailyAttendance() {
                     </Button>
                 </div>
             </div>
-            {attendance.map((user, i) => {
-                const open = expanded === user.userId
 
-                return (
-                    <>
-                        <div
-                            key={user.userId + i}
-                            className="overflow-hidden rounded-xl border border-border bg-card"
-                        >
-                            <button
-                                title={`Click to get activities of @${user.userName}`}
-                                onClick={() => {
-                                    setExpanded(open ? null : user.userId)
-                                    setSelectedUserId(user.userId)
-                                    setSelectedAttendanceId('')
-                                }}
-                                className="flex w-full items-center gap-4 p-3 "
+
+            <div className='h-90  space-y-2 overflow-y-auto hide-scroll'>
+                {attendance.map((user, i) => {
+                    const open = expanded === user.userId
+
+                    return (
+                        <>
+                            <div
+                                key={user.userId + i}
+                                className="overflow-hidden rounded-xl border border-border bg-card"
                             >
-                                <div className="flex w-64 items-center gap-3">
-                                    {
-                                        open ? (
-                                            <ChevronDown size={16} />
-                                        ) : (
-                                            <ChevronRight size={16} />
-                                        )}
-
-                                    <div className={cn("flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary",)}>
-                                        <div className={cn('absolute h-4 w-4 rounded-full ',
-                                            user.sessions.length > 0 && user?.sessions[0]?.status === 'working' && 'animate-ping bg-primary')} />
-                                        {user.fullName[0].toUpperCase()}
-                                    </div>
-
-                                    <div className="text-left relative pe-4  ">
-                                        <div className="font-medium leading-none">
-                                            {user.fullName}
-                                        </div>
-
-                                        <div className="text-xs text-muted-foreground">
-                                            @{user.userName}
-                                        </div>
-                                        <div className={cn('absolute  top-0 -right-12 px-2 rounded-full text-xs ', user.sessions.length == 0 ? 'bg-red-600/40' : 'bg-green-600/40')}>
-                                            <p className='text-neutral-200'>
-                                                {user.sessions.length === 0 ? 'Absent' : 'Present'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-1 justify-end gap-8 text-sm">
-                                    <div className="text-center">
-                                        <div className="font-semibold">
-                                            {user.sessions.length}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            Sessions
-                                        </div>
-                                    </div>
-
-                                    <div className="text-center">
-                                        <div className="font-semibold text-green-600">
-                                            {formatSeconds(
-                                                user.totalWorkSeconds
+                                <button
+                                    title={`Click to get activities of @${user.userName}`}
+                                    onClick={() => {
+                                        setExpanded(open ? null : user.userId)
+                                        setSelectedUserId(user.userId)
+                                        setSelectedAttendanceId('')
+                                    }}
+                                    className="flex w-full items-center gap-4 p-3 "
+                                >
+                                    <div className="flex w-64 items-center gap-3">
+                                        {
+                                            open ? (
+                                                <ChevronDown size={16} />
+                                            ) : (
+                                                <ChevronRight size={16} />
                                             )}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            Work
-                                        </div>
-                                    </div>
 
-                                    <div className="text-center">
-                                        <div className="font-semibold text-yellow-600">
-                                            {formatSeconds(
-                                                user.totalBreakSeconds
-                                            )}
+                                        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary",)}>
+                                            <div className={cn('absolute h-4 w-4 rounded-full ',
+                                                user.sessions.length > 0 && user?.sessions[0]?.status === 'working' && 'animate-ping bg-primary')} />
+                                            {user.fullName[0].toUpperCase()}
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            Break
-                                        </div>
-                                    </div>
 
-                                    <div className="text-center">
-                                        <div className="font-semibold text-red-600">
-                                            {formatSeconds(
-                                                user.totalIdleSeconds
-                                            )}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground">
-                                            Idle
+                                        <div className="text-left relative pe-4  ">
+                                            <div className="font-medium leading-none">
+                                                {user.fullName}
+                                            </div>
+
+                                            <div className="text-xs text-muted-foreground">
+                                                @{user.userName}
+                                            </div>
+                                            <div className={cn('absolute  top-0 -right-12 px-2 rounded-full text-xs ', user.sessions.length == 0 ? 'bg-red-600/40' : 'bg-green-600/40')}>
+                                                <p className='text-neutral-200'>
+                                                    {user.sessions.length === 0 ? 'Absent' : 'Present'}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </button>
 
-                            {open && (
-                                <div className="border-t border-t-border p-3">
-                                    <div className="space-y-2">
-                                        {user.sessions.map((session) => (
-                                            <button
-                                                key={session.attendanceId}
-                                                title='click to get activities of that session'
-                                                onClick={() => setSelectedAttendanceId(session.attendanceId)}
-                                                className="w-full  flex items-center justify-between rounded-full border border-dashed border-primary/30 px-4 py-2 text-sm bg-muted/5"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <span className="font-medium">
-                                                        {formatTime(
-                                                            session.loginTime
-                                                        )}
-                                                        {' → '}
-                                                        {formatTime(
-                                                            session.logoutTime
-                                                        )}
-                                                    </span>
+                                    <div className="flex flex-1 justify-end gap-8 text-sm">
+                                        <div className="text-center">
+                                            <div className="font-semibold">
+                                                {user.sessions.length}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                Sessions
+                                            </div>
+                                        </div>
 
-                                                    <span
-                                                        className={cn(
-                                                            'rounded-full px-2 py-1 text-xs',
-                                                            {
-                                                                'bg-green-100 text-green-700':
-                                                                    session.status ===
-                                                                    'working',
-                                                                'bg-yellow-100 text-yellow-700':
-                                                                    session.status ===
-                                                                    'break',
-                                                                'bg-red-100 text-red-700':
-                                                                    session.status ===
-                                                                    'logged_out'
-                                                            }
-                                                        )}
-                                                    >
-                                                        {session.status}
-                                                    </span>
-                                                </div>
+                                        <div className="text-center">
+                                            <div className="font-semibold text-green-600">
+                                                {formatSeconds(
+                                                    user.totalWorkSeconds
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                Work
+                                            </div>
+                                        </div>
 
-                                                <div className="flex gap-5 text-xs">
-                                                    <span>
-                                                        W:{' '}
-                                                        {formatSeconds(
-                                                            session.workSeconds
-                                                        )}
-                                                    </span>
+                                        <div className="text-center">
+                                            <div className="font-semibold text-yellow-600">
+                                                {formatSeconds(
+                                                    user.totalBreakSeconds
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                Break
+                                            </div>
+                                        </div>
 
-                                                    <span>
-                                                        B:{' '}
-                                                        {formatSeconds(
-                                                            session.breakSeconds
-                                                        )}
-                                                    </span>
-
-                                                    <span>
-                                                        I:{' '}
-                                                        {formatSeconds(
-                                                            session.idleSeconds
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        ))}
+                                        <div className="text-center">
+                                            <div className="font-semibold text-red-600">
+                                                {formatSeconds(
+                                                    user.totalIdleSeconds
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                Idle
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )
-            })}
+                                </button>
+
+                                {open && (
+                                    <div className="border-t border-t-border p-3">
+                                        <div className="space-y-2">
+                                            {user.sessions.map((session) => (
+                                                <button
+                                                    key={session.attendanceId}
+                                                    title='click to get activities of that session'
+                                                    onClick={() => setSelectedAttendanceId(session.attendanceId)}
+                                                    className="w-full  flex items-center justify-between rounded-full border border-dashed border-primary/30 px-4 py-2 text-sm bg-muted/5"
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="font-medium">
+                                                            {formatTime(
+                                                                session.loginTime
+                                                            )}
+                                                            {' → '}
+                                                            {formatTime(
+                                                                session.logoutTime
+                                                            )}
+                                                        </span>
+
+                                                        <span
+                                                            className={cn(
+                                                                'rounded-full px-2 py-1 text-xs',
+                                                                {
+                                                                    'bg-green-100 text-green-700':
+                                                                        session.status ===
+                                                                        'working',
+                                                                    'bg-yellow-100 text-yellow-700':
+                                                                        session.status ===
+                                                                        'break',
+                                                                    'bg-red-100 text-red-700':
+                                                                        session.status ===
+                                                                        'logged_out'
+                                                                }
+                                                            )}
+                                                        >
+                                                            {session.status}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex gap-5 text-xs">
+                                                        <span>
+                                                            W:{' '}
+                                                            {formatSeconds(
+                                                                session.workSeconds
+                                                            )}
+                                                        </span>
+
+                                                        <span>
+                                                            B:{' '}
+                                                            {formatSeconds(
+                                                                session.breakSeconds
+                                                            )}
+                                                        </span>
+
+                                                        <span>
+                                                            I:{' '}
+                                                            {formatSeconds(
+                                                                session.idleSeconds
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )
+                })}
+            </div>
+
         </div>
     )
 }

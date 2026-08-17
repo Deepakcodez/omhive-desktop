@@ -27,10 +27,9 @@ function RouteComponent() {
   return (
     <div className="h-screen overflow-hidden   bg-background  text-foreground font-sans antialiased Selection:bg-indigo-500/30 selection:text-indigo-200 select-none ">
       <div className="relative z-10 h-full  mx-auto px-6 py-8 overflow-y-auto hide-scroll" >
-
         <Link to="/" className='fixed top-2 left-2 '>
           <Button title='Back' className='aspect-square p-1.5'>
-            <ChevronLeft  />
+            <ChevronLeft />
           </Button>
         </Link>
         <div className="relative z-10  mx-auto px-6 py-8 space-y-8 max-w-7xl">

@@ -80,7 +80,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 }
 
 
-export default function HourlyTimeline() {
+export default function     HourlyTimeline() {
     const { selectedDate, selectedUserId, selectedAttendanceId } = useDailyActivitiesStore()
     const [graphData, setGraphData] = useState<GraphData[] | null>(null)
 
@@ -206,26 +206,24 @@ export default function HourlyTimeline() {
 
 
     return (
-        <div className="grid grid-cols-1 gap-6">
-            <div className=" bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-200">
-                            Hourly Timeline
-                        </h3>
+        <div className="grid grid-cols-1 gap-2">
+            <div className="flex items-center justify-between ">
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-200">
+                        Hourly Timeline
+                    </h3>
 
-                        <p className="text-slate-400 text-xs mt-0.5">
-                            Distribution of
-                            software, idle, and break
-                            time per hour.
-                        </p>
-                    </div>
-
-                    <span className="text-xs  border-y border-y-border px-2.5 py-0.5 rounded-full bg-white/10 text-foreground">
-                        Minutes
-                    </span>
+                    <p className="text-slate-400 text-xs mt-0.5">
+                        Distribution of
+                        software, idle, and break
+                        time per hour.
+                    </p>
                 </div>
 
+            </div>
+
+
+            <div className=" bg-card border border-border rounded-2xl p-6 shadow-xl flex flex-col">
                 <div className="w-full overflow-x-auto custom-scrollbar">
                     <div className="h-80 min-w-[900px]">
                         <ResponsiveContainer
