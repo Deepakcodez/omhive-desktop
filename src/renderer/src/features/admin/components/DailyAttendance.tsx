@@ -156,9 +156,9 @@ export default function DailyAttendance() {
                                                 <ChevronDown size={16} />
                                             ) : (
                                                 <ChevronRight size={16} />
-                                            )}
-
-                                        <div className={cn("flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary",)}>
+                                            )
+                                            }
+                                        <div className={cn("relative flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary",)}>
                                             <div className={cn('absolute h-4 w-4 rounded-full ',
                                                 user.sessions.length > 0 && user?.sessions[0]?.status === 'working' && 'animate-ping bg-primary')} />
                                             {user.fullName[0].toUpperCase()}

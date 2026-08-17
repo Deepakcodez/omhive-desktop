@@ -5,8 +5,8 @@ export const SYNC_REMOTE_INTERVAL_MS = 60_000
 export const POLL_INTERVAL_MS = 3_000
 export const PERIODIC_CHECK_MS = 60_000
 export const HEARTBEAT_CHECK_MS = 30_000
-// export const API_ENDPOINT = 'https://hive.omenterprisesgroup.in/api'
-export const API_ENDPOINT = 'http://localhost:8026/api'
+export const API_ENDPOINT = 'https://hive.omenterprisesgroup.in/api'
+// export const API_ENDPOINT = 'http://localhost:8026/api'
 
 
 

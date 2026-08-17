@@ -97,8 +97,37 @@ interface Api {
       userName: string;
       fullName: string;
       phone: string;
+      isAdmin: boolean;
+      isActive: boolean;
       createdAt: Date;
     }[] | null
+    success: boolean
+    message: string
+  }>
+  deactivateUser: (payload: { userId: string }) => Promise<{
+    data: {
+
+      id: string;
+      userName: string;
+      fullName: string;
+      phone: string;
+      isAdmin: boolean;
+      isActive: boolean;
+      createdAt: Date;
+    }
+    success: boolean
+    message: string
+  }>
+  activateUser: (payload: { userId: string }) => Promise<{
+    data: {
+      id: string;
+      userName: string;
+      fullName: string;
+      phone: string;
+      isAdmin: boolean;
+      isActive: boolean;
+      createdAt: Date;
+    }
     success: boolean
     message: string
   }>

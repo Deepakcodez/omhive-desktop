@@ -1,35 +1,63 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { User } from "./UserSelector";
-import { Menu, Search, Trash2, UserX } from "lucide-react";
+import { Menu, Search, UserX } from "lucide-react";
 import UserNotFoundInList from "@/components/ui/user-not-found-in-list";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 type Props = {
     onSelect?: (user: User) => void;
+    userCreated: boolean
 };
 
-export default function UserList({ onSelect }: Props) {
+export default function UserList({ onSelect, userCreated }: Props) {
     const [users, setUsers] = useState<User[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string>("");
     const [search, setSearch] = useState("");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-    const handleDeleteUser = async (user: User) => {
+
+    const handleInactiveUser = async (userId: string) => {
         setOpenMenuId(null);
-
-        console.log("Delete user:", user.id);
-
-        // await window.api.deleteUser(user.id);
+        const toastId = toast.loading("Inactivating user")
+        try {
+            await window.api.deactivateUser({ userId });
+            toast.success("User inactivated successfully", {
+                id: toastId,
+            });
+        } catch (error) {
+            toast.error("Failed to inactive user", {
+                id: toastId,
+            });
+            console.error("Failed to inactive user:", error);
+        } finally {
+            setLoadingUsers(true);
+            const res = await window.api.listUser();
+            console.log(res)
+            if (res.success && res.data) {
+                setUsers(res.data);
+            }
+            setLoadingUsers(false);
+        }
     };
 
-    const handleInactiveUser = async (user: User) => {
+    const handleActiveUser = async (userId: string) => {
         setOpenMenuId(null);
 
-        console.log("Inactive user:", user.id);
-
-        // await window.api.inactiveUser(user.id);
+        try {
+            await window.api.activateUser({ userId });
+        } catch (error) {
+            console.error("Failed to active user:", error);
+        } finally {
+            setLoadingUsers(true);
+            const res = await window.api.listUser();
+            if (res.success && res.data) {
+                setUsers(res.data);
+            }
+            setLoadingUsers(false);
+        }
     };
-
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -49,7 +77,7 @@ export default function UserList({ onSelect }: Props) {
         };
 
         fetchUsers();
-    }, []);
+    }, [userCreated]);
 
     const filteredUsers = useMemo(() => {
         const query = search.toLowerCase().trim();
@@ -134,7 +162,6 @@ export default function UserList({ onSelect }: Props) {
                 ) : (
                     <div className="max-h-120 overflow-y-auto bg-card border-y rounded-2xl hide-scroll">
                         {filteredUsers.map((user) => {
-                            const isSelected = selectedUserId === user.id;
                             const isMenuOpen = openMenuId === user.id;
 
                             return (
@@ -150,8 +177,10 @@ export default function UserList({ onSelect }: Props) {
                                     >
                                         {/* Avatar */}
                                         <div
-                                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full
-              bg-gray-100 text-sm font-semibold text-gray-700"
+                                            className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-gray-700",
+
+                                                user.isActive ? "bg-gray-200" : "bg-red-400  "
+                                            )}
                                         >
                                             {getInitials(user)}
                                         </div>
@@ -185,29 +214,30 @@ export default function UserList({ onSelect }: Props) {
                                         {isMenuOpen && (
                                             <div
                                                 className="absolute right-0 top-11 z-50 w-44 overflow-hidden
-                rounded-3xl border border-border bg-card p-1 shadow-xl"
+                rounded-full border border-border bg-card p-1 shadow-xl"
                                             >
                                                 {/* Inactive */}
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleInactiveUser(user)}
+                                                    onClick={() => {
+                                                        if (user.isActive) {
+                                                            handleInactiveUser(user.id)
+                                                        } else {
+                                                            handleActiveUser(user.id)
+                                                        }
+                                                    }}
                                                     className="flex w-full items-center gap-2 rounded-full px-3 py-2.5
                   text-sm text-foreground transition hover:bg-muted-foreground"
                                                 >
                                                     <UserX className="h-4 w-4" />
-                                                    <span>Inactive user</span>
+                                                    {
+                                                        user.isActive ? (
+                                                            <span>Inactivate user</span>
+                                                        ) : <span>Activate user</span>
+                                                    }
                                                 </button>
 
-                                                {/* Delete */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDeleteUser(user)}
-                                                    className="flex w-full items-center gap-2 rounded-full px-3 py-2.5
-                  text-sm text-red-500 transition hover:bg-red-500/10"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                    <span>Delete user</span>
-                                                </button>
+
                                             </div>
                                         )}
                                     </div>
@@ -215,8 +245,9 @@ export default function UserList({ onSelect }: Props) {
                             );
                         })}
                     </div>
-                )}
-            </div>
-        </div>
+                )
+                }
+            </div >
+        </div >
     );
 }

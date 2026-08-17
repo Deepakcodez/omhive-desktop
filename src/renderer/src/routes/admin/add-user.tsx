@@ -14,7 +14,7 @@ export const Route = createFileRoute("/admin/add-user")({
 function RouteComponent() {
 
   const router = useRouter();
-
+  const [userCreated, setUserCreated] = useState(false)
   return (
     <div className="min-h-screen grid grid-cols-2 px-4 py-10">
 
@@ -24,8 +24,8 @@ function RouteComponent() {
         className='aspect-square p-1.5 fixed top-2 left-2 '>
         <ChevronLeft />
       </Button>
-      <CreateUserForm />
-      <UserList />
+      <CreateUserForm setUserCreated={setUserCreated} />
+      <UserList userCreated={userCreated} />
 
     </div>
   );

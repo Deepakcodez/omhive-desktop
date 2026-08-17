@@ -37,5 +37,59 @@ export function AdminIpc() {
         }
 
     })
+    ipcMain.handle('admin:deactivate-user', async (_, payload: { userId: string }) => {
+        try {
+            console.log("payload", payload)
+            const response = await fetch(API_ENDPOINT + `/admin/deactivate-user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const data = await response.json()
+            console.log("deactivated user-->", data)
+            return data
+        } catch (error) {
+            console.error('Error  in resuming user:', error)
+            return {
+                data: null,
+                success: false,
+                message: `Error - ${error}`
+            }
+        }
+
+    })
+    ipcMain.handle('admin:activate-user', async (_, payload: { userId: string }) => {
+        try {
+            console.log("payload", payload)
+            const response = await fetch(API_ENDPOINT + `/admin/activate-user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const data = await response.json()
+            console.log("deactivated user-->", data)
+            return data
+        } catch (error) {
+            console.error('Error  in resuming user:', error)
+            return {
+                data: null,
+                success: false,
+                message: `Error - ${error}`
+            }
+        }
+
+    })
 
 }

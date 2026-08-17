@@ -1,5 +1,5 @@
 import Button from '@/components/ui/button';
-import React, { useState } from 'react'
+import React, { Dispatch, SetStateAction, useState } from 'react'
 import toast from 'react-hot-toast';
 
 type CreateUserData = {
@@ -9,7 +9,7 @@ type CreateUserData = {
 };
 
 
-export default function CreateUserForm() {
+export default function CreateUserForm({ setUserCreated }: { setUserCreated: Dispatch<SetStateAction<boolean>> }) {
     const [formData, setFormData] = useState<CreateUserData>({
         userName: "",
         fullName: "",
@@ -37,6 +37,7 @@ export default function CreateUserForm() {
                 success: 'User created successfully!',
                 error: 'Failed in creating user ',
             });
+            setUserCreated((prev) => !prev)
         }
         catch (error) {
             toast.error("something went wrong")
@@ -64,7 +65,7 @@ export default function CreateUserForm() {
             </div>
 
             {/* Form */}
-            <div className="rounded-2xl border-y bg-linear-to-b from-neutral-800 to-neutral-900 p-6 shadow-sm">
+            <div className="rounded-2xl border-y bg-card p-6 shadow-sm">
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Username */}
                     <div>

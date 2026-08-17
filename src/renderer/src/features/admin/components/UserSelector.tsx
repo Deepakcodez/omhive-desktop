@@ -2,11 +2,14 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import React from 'react'
 
 export interface User {
-  id: string
-  userName: string
-  fullName: string
-  phone?: string
-  createdAt?: string | Date
+  id: string;
+  userName: string;
+  fullName: string;
+  phone: string;
+  isAdmin: boolean;
+  isActive: boolean;
+  createdAt: Date;
+
 }
 
 interface UserSelectorProps {
