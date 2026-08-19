@@ -2,7 +2,7 @@ import { ipcMain } from "electron"
 import ElectronStore from "electron-store"
 import { StoreType } from "../types"
 
-export const AuthIpc = ({
+export const SessionIpc = ({
     store,
 }: {
     store: ElectronStore<StoreType>

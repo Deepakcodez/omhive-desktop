@@ -35,7 +35,7 @@ export const ExitConfirmation = ({ setShowExitModal }: Props) => {
         localStorage.removeItem("breakId")
     }
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-3xl flex items-center justify-center">
+        <div className="fixed inset-0 z-9999 bg-black/50 backdrop-blur-3xl flex items-center justify-center">
             <div className="relative bg-card/30 border border-border rounded-xl p-6 w-4/12 ">
 
                 <button
@@ -45,7 +45,7 @@ export const ExitConfirmation = ({ setShowExitModal }: Props) => {
                     <X className='text-white' />
                 </button>
                 <h2 className="text-2xl font-semibold text-foreground">
-                    Before leaving 
+                    Before leaving
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-2">

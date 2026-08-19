@@ -1,10 +1,9 @@
 import Button from "@/components/ui/button";
 import CreateUserForm from "@/features/admin/components/create-user-form";
 import UserList from "@/features/admin/components/user-list";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute,  useRouter } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/add-user")({
   component: RouteComponent,

@@ -13,7 +13,7 @@ type Props = {
 export default function UserList({ onSelect, userCreated }: Props) {
     const [users, setUsers] = useState<User[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
-    const [selectedUserId, setSelectedUserId] = useState<string>("");
+    const [_selectedUserId, setSelectedUserId] = useState<string>("");
     const [search, setSearch] = useState("");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 

@@ -4,6 +4,9 @@ import type { AppState, StoreType, TSession } from '../types'
 import { BrowserWindow } from 'electron'
 
 
+let ValidationRunning = false;
+
+
 export function getLocalDate(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata'
@@ -24,19 +27,26 @@ export function updateAppState(
 }
 
 
-export async function syncToServer(sessions: TSession[]): Promise<void> {
+export async function syncToServer(sessions: TSession[]): Promise<{ success: boolean }> {
   try {
     const res = await fetch(`${API_ENDPOINT}/activity`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sessions)
     })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      return {
+        success: false
+      }
+    }
     console.log(`[sync] Sent ${sessions.length} session(s)`)
+    return {
+      success: res.ok
+    }
   } catch (err) {
-    // Put sessions back so they're retried next cycle
-    console.error('[sync] Failed, will retry:', err)
-    throw new Error(`HTTP error! ${err}`)
+    return {
+      success: false
+    }
   }
 }
 
@@ -190,32 +200,42 @@ export const periodicValidation = (
     clearPendingSessions: () => void
   }) => {
   setInterval(async () => {
+
+    if (ValidationRunning) return;
+
     const appState = store.get('appState')
 
     if (!appState.currentUserId) return
 
-    const session = await isLoggedIn(
-      appState.currentUserId
-    )
-
-    if (!session?.loggedIn) {
-      console.log('Attendance expired')
-
-      store.set('appState', {
-        trackingEnabled: false,
-        currentUserId: '',
-        attendanceId: '',
-        appInitialized: true
-      })
-
-      clearCurrentSession()
-      clearPendingSessions()
-
-      store.delete('currentSession')
-
-      mainWindow?.webContents.send(
-        'app:auto-logout'
+    ValidationRunning = true;
+    try {
+      const session = await isLoggedIn(
+        appState.currentUserId
       )
+
+      if (!session?.loggedIn) {
+        store.set('appState', {
+          trackingEnabled: false,
+          currentUserId: '',
+          attendanceId: '',
+          appInitialized: true
+        })
+
+        clearCurrentSession()
+        clearPendingSessions()
+
+        store.delete('currentSession')
+
+        mainWindow?.webContents.send(
+          'app:auto-logout', {
+          reason: "Attendance Expired"
+        }
+        )
+      }
+    } catch (error) {
+      console.error('Periodic session validation failed:', error);
+    } finally {
+      ValidationRunning = false;
     }
   }, PERIODIC_CHECK_MS)
 }
