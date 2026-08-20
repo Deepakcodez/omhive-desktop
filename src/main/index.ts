@@ -317,12 +317,6 @@ app.whenReady().then(async () => {
     if (!appState.trackingEnabled) return
 
     const idleTime = powerMonitor.getSystemIdleTime()
-    console.log({
-      idleTime,
-      currentSession: !!currentSession,
-      trackingEnabled: appState.trackingEnabled
-    })
-
     // Send live idle time to renderer
     mainWindow?.webContents.send('idle-time', idleTime)
 
@@ -340,8 +334,6 @@ app.whenReady().then(async () => {
       )
 
       try {
-        console.log("will stop idle session here")
-
         await stopIdleSession({
           attendanceId: appState.attendanceId || '',
           endTime: new Date(endTime).toISOString()
@@ -471,14 +463,11 @@ app.whenReady().then(async () => {
   setInterval(async () => {
     const sessions = store?.get('sessions', []) || []
     const current = store?.get('currentSession') as TSession
-    console.log('data in local db ', sessions)
     const payload = [...sessions]
 
     if (current) {
       payload.push(current)
     }
-
-    console.log('payload bb', payload)
     if (payload.length === 0) return
     try {
       const result = await syncToServer(payload)
