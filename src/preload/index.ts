@@ -4,6 +4,39 @@ import { DailyAttendanceResponse } from '../shared/types'
 
 // Custom APIs for renderer
 const api = {
+  onAppInitialized: (callback) => {
+    const listener = (_event, data) => {
+      callback(data);
+    };
+
+    ipcRenderer.on("app:initialized", listener);
+
+    return () => {
+      ipcRenderer.removeListener(
+        "app:initialized",
+        listener
+      );
+    };
+  },
+
+  onGlobalError: (callback) => {
+    const listener = (_event, error) => {
+      callback(error);
+    };
+
+    ipcRenderer.on(
+      "app:global-error",
+      listener
+    );
+
+    return () => {
+      ipcRenderer.removeListener(
+        "app:global-error",
+        listener
+      );
+    };
+  },
+
   onIdleTime: (callback: (idleTime: number) => void) => {
     ipcRenderer.on('idle-time', (_event, idleTime: number) => callback(idleTime))
   },
@@ -55,7 +88,7 @@ const api = {
   closeApp: () => {
     ipcRenderer.send('app:close')
   },
-  isLoggedIn: () => ipcRenderer.invoke('auth:status'),
+  syncApp: () => ipcRenderer.invoke('app:sync'),
   onHostSleep: (callback) => {
     const listener = (_, data) => callback(data)
 
@@ -79,7 +112,24 @@ const api = {
         listener
       )
     }
-  }
+  },
+  onAppQuitting: (callback: () => void) => {
+    const listener = () => {
+      callback();
+    };
+
+    ipcRenderer.on(
+      "app:quitting",
+      listener
+    );
+
+    return () => {
+      ipcRenderer.removeListener(
+        "app:quitting",
+        listener
+      );
+    };
+  },
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

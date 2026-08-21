@@ -70,6 +70,15 @@ export interface MonthAttendanceResponse {
 
 
 interface Api {
+  onAppInitialized: (
+    callback: (state: AppState) => void
+  ) => () => void;
+  onGlobalError: (
+    callback: (error: {
+      type: "uncaught-exception" | "unhandled-rejection";
+      message: string;
+    }) => void
+  ) => () => void;
   onIdleTime: (callback: (idleTime: number) => void) => void
   removeIdleTimeListener: () => void
   onActivityUpdate: (cb: (s: TSession) => void) => void
@@ -222,10 +231,11 @@ interface Api {
   onBeforeClose: (callback: () => void) => void
   closeCancelled: () => void
   closeApp: () => void
-  isLoggedIn: () => ({
+  syncApp: () => ({
     initialized: boolean,
     loggedIn: boolean,
     trackingEnabled: boolean,
+    userId: string,
     attendanceId: string
   })
   onAutoLogout: (
@@ -234,6 +244,9 @@ interface Api {
   onHostSleep: (
     callback: (s: 'sleep' | 'resume') => void
   ) => () => void
+  onAppQuitting: (
+    callback: () => void
+  ) => () => void;
 }
 
 declare global {

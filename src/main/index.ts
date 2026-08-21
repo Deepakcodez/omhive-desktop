@@ -9,14 +9,16 @@ import {
   MIN_SESSION_DURATION_SEC,
   POLL_INTERVAL_MS,
   SYNC_LOCAL_INTERVAL_MS,
-  SYNC_REMOTE_INTERVAL_MS
+  SYNC_REMOTE_INTERVAL_MS,
+  WorkStatus
 } from './constants'
 import type { StoreType, TSession, } from './types'
 import { IPC_Handlers } from './ipc'
-import { isLoggedIn, periodicValidation, sendHeartBeat, startIdleSession, stopIdleSession, syncToServer } from './utils'
+import { isLoggedIn, sendHeartBeat, SessionStatus, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
-import { SessionIpc } from './ipc/sessionIpc'
-import { handleUserBreak, handleUserResume } from './utils/auth'
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 
 
 
@@ -27,10 +29,12 @@ const USERNAME = os.userInfo().username
 // ── Session state ───────────────────────────────────────────────────────────
 let currentSession: TSession | null = null
 let pendingSessions: TSession[] = []
+let UserSession: SessionStatus | null = null
 let mainWindow: BrowserWindow | null = null
 let idleStartedAt: number | null = null
 let askingClose = false
 let blockerId: number | null = null;
+let isQuitting = false;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 // not current session  return null
@@ -65,12 +69,6 @@ function pushToRenderer(session: TSession): void {
   mainWindow?.webContents.send('activity:update', session)
 }
 
-function setHostSleep(status: 'sleep' | 'resume') {
-  mainWindow?.webContents.send(
-    'app:sleep',
-    status
-  )
-}
 
 // ── Window ───────────────────────────────────────────────────────────────────
 function createWindow(): void {
@@ -91,10 +89,21 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => mainWindow!.show())
 
   mainWindow.on('close', async (e) => {
+    if (isQuitting) {
+      return;
+    }
+
+    if (askingClose) {
+      return;
+    }
+
     if (!askingClose) {
       e.preventDefault()
+      await wait(5000)
       askingClose = true
       mainWindow?.webContents.send('app:before-close')
+      // app.quit()
+      // mainWindow?.webContents.send('app:quitting')
     }
   })
 
@@ -118,6 +127,23 @@ function createWindow(): void {
   }
 }
 
+
+const sendGlobalError = (
+  type: "uncaught-exception" | "unhandled-rejection",
+  error: unknown
+) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  mainWindow.webContents.send("app:global-error", {
+    type,
+    message:
+      error instanceof Error
+        ? error.message
+        : String(error),
+  });
+}
+
+
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 app.whenReady().then(async () => {
   const { default: Store } = await import('electron-store')
@@ -138,162 +164,68 @@ app.whenReady().then(async () => {
       sessions: []
     }
   })
+
+
   const userInfo = store.get('userInfo')
 
+  try {
+    if (userInfo.userId) {
+      UserSession = await isLoggedIn(userInfo.userId);
 
+      if (UserSession.loggedIn) {
+        store.set("appState", {
+          trackingEnabled: UserSession.status === WorkStatus.WORKING,
+          currentUserId: userInfo.userId,
+          attendanceId: UserSession.attendanceId,
+          appInitialized: true,
+        });
+      } else {
+        store.set("appState", {
+          trackingEnabled: false,
+          currentUserId: "",
+          attendanceId: "",
+          appInitialized: true,
+        });
 
-  // Session IPC for sharing session state between the main and renderer processes
-  SessionIpc({ store })
+        store.set("userInfo", {
+          ...userInfo,
+          attendanceId: "",
+        });
+      }
+    } else {
+      store.set("appState", {
+        trackingEnabled: false,
+        currentUserId: "",
+        attendanceId: "",
+        appInitialized: true,
+      });
+
+      store.set("userInfo", {
+        ...userInfo,
+        attendanceId: "",
+      });
+    }
+
+  } catch (error) {
+    console.error("App initialization failed:", error);
+
+    mainWindow?.webContents.send(
+      "app:init-error",
+      {
+        message: "Unable to validate your session."
+      }
+    );
+  }
+
+  // sync app status in between renderer and main process
 
   // prevent app from sleep
   // while app running system will not sleep when user is ideal
   blockerId = powerSaveBlocker.start("prevent-display-sleep");
 
 
-  //  if got user id in [local DB]
-  if (userInfo.userId) {
-    // check is user start working / click on login btn of ui
-    const session = await isLoggedIn(userInfo.userId);
-    try {
-      if (session?.loggedIn) {
-        // set latest details in the [local DB]
-        store.set('appState', {
-          trackingEnabled: session.status === 'working',
-          currentUserId: userInfo.userId,
-          attendanceId: session.attendanceId
-        })
-        const appState = store.get("appState");
-        // prevent sleep if user is logged in
-        if (appState.trackingEnabled) {
-          console.log("Power blocker started");
-          blockerId = powerSaveBlocker.start("prevent-display-sleep");
-        }
-
-      }
-      else {
-        store.set('appState', {
-          trackingEnabled: false,
-          currentUserId: '',
-          attendanceId: ''
-        })
-        store.set('userInfo', {
-          ...userInfo,
-          attendanceId: ''
-        })
-      }
-      const appState = store.get('appState')
-      store.set('appState', {
-        ...appState,
-        appInitialized: true
-      })
-
-    } catch (err) {
-      console.error(err)
-      // will handle later 
-      // show error in ui
-    }
-  }
 
 
-
-  // check in every 1 min is Logined if not than log out and send signal to the ui
-  // and remove user data From Store
-  periodicValidation({
-    store,
-    mainWindow,
-    clearCurrentSession: () => {
-      currentSession = null
-    },
-    clearPendingSessions: () => {
-      pendingSessions = []
-    }
-  })
-
-  // powerMonitor.on('suspend', async () => {
-  //   const appState = store.get('appState')
-  //   if (!appState.trackingEnabled) return
-  //   if (!appState.attendanceId) return
-
-  //   const closed = closeCurrentSession()
-
-  //   if (closed) {
-  //     pendingSessions.push(closed)
-  //   }
-
-  //   currentSession = null
-
-  //   try {
-  //     await handleUserBreak({
-  //       store,
-  //       payload: {
-  //         attendanceId: appState.attendanceId
-  //       }
-  //     })
-
-  //     idleStartedAt = null
-
-  //     setHostSleep('sleep')
-  //   } catch (err) {
-  //     console.error(err)
-  //   }
-  // })
-
-  // powerMonitor.on('resume', async () => {
-  //   const appState = store.get('appState')
-  //   console.log("machine wakeup")
-
-  //   if (!appState.currentUserId) return
-
-  //   const session = await isLoggedIn(
-  //     appState.currentUserId
-  //   )
-
-  //   if (!session?.loggedIn) {
-  //     store.set('appState', {
-  //       trackingEnabled: false,
-  //       currentUserId: '',
-  //       attendanceId: '',
-  //       appInitialized: true
-  //     })
-  //     if (blockerId !== null) {
-  //       powerSaveBlocker.stop(blockerId);
-  //       blockerId = null;
-  //       console.log("Power blocker stopped");
-  //     }
-  //     currentSession = null
-  //     pendingSessions = []
-
-  //     store.delete('currentSession')
-
-  //     mainWindow?.webContents.send(
-  //       'app:auto-logout'
-  //     )
-
-  //     return
-  //   }
-
-  //   if (
-  //     session.status === 'break' &&
-  //     session.attendanceId
-  //   ) {
-  //     await handleUserResume({
-  //       store,
-  //       payload: {
-  //         attendanceId: session.attendanceId
-  //       }
-  //     })
-  //     store.set('appState', {
-  //       ...appState,
-  //       trackingEnabled: true,
-  //       attendanceId: session.attendanceId
-  //     })
-  //     setHostSleep('resume')
-  //   }
-
-  //   mainWindow?.webContents.send(
-  //     'activity:refresh'
-  //   )
-  // })
 
   electronApp.setAppUserModelId('com.omhive')
 
@@ -307,6 +239,15 @@ app.whenReady().then(async () => {
     sessions: store ? store.get('sessions', []) : []
   }))
 
+
+  // UserIpc({ store })   user related IPC
+  // ActivityIpc()       activity related IPC
+  // AttendanceIpc()   attendance related IPC
+  // AlertIpc()        alert related IPC
+  // AdminIpc()        admin related IPC
+  // SyncAppIpc({ store }) sync app related IPC
+
+  //IPC handllers
   IPC_Handlers({ store })
 
   createWindow()
@@ -483,7 +424,17 @@ app.whenReady().then(async () => {
   }, SYNC_REMOTE_INTERVAL_MS)
 
 
-  sendHeartBeat(store)
+  // send heartbeat to the server every 30 second , 
+  // set last seen value  
+  //  in db
+  // if no response from the server then auto logout
+
+  sendHeartBeat({
+    store,
+    mainWindow,
+    clearCurrentSession: () => { currentSession = null },
+    clearPendingSessions: () => { pendingSessions = [] }
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -492,17 +443,35 @@ app.whenReady().then(async () => {
 
 
 
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+
+  sendGlobalError(
+    "uncaught-exception",
+    error
+  );
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error(
+    "Unhandled Promise Rejection:",
+    reason
+  );
+
+  sendGlobalError(
+    "unhandled-rejection",
+    reason
+  );
+});
+
+
+
 // Flush any open session before quitting
-app.on('before-quit', () => {
-  if (
-    blockerId !== null &&
-    powerSaveBlocker.isStarted(blockerId)
-  ) {
-    powerSaveBlocker.stop(blockerId);
-  }
-  const closed = closeCurrentSession()
-  if (closed) syncToServer([closed])
-})
+
+
+app.on("before-quit", async (_event) => {
+
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

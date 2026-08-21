@@ -8,6 +8,11 @@ export const HEARTBEAT_CHECK_MS = 30_000
 export const API_ENDPOINT = 'https://hive.omenterprisesgroup.in/api'
 // export const API_ENDPOINT = 'http://localhost:8026/api'
 
+export const WorkStatus = {
+    BREAK: 'break',
+    WORKING: 'working',
+    LOGGED_OUT: 'logged_out'
+}
 
 
 // user is idea for 5 sec

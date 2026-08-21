@@ -4,7 +4,27 @@ import type { AppState, StoreType, TSession } from '../types'
 import { BrowserWindow } from 'electron'
 
 
-let ValidationRunning = false;
+export type SessionStatus = {
+  loggedIn: boolean
+  attendanceId: string
+  loginTime: Date
+  status: 'working' | 'break' | 'logged_out'
+}
+  | {
+    loggedIn: boolean
+    attendanceId: null
+    loginTime: null
+    status: null
+  }
+
+export type AutoLogoutParams = {
+  store: ElectronStore<StoreType>;
+  mainWindow: BrowserWindow | null;
+  clearCurrentSession: () => void;
+  clearPendingSessions: () => void;
+  reason?: string;
+};
+
 
 
 export function getLocalDate(date = new Date()) {
@@ -12,6 +32,19 @@ export function getLocalDate(date = new Date()) {
     timeZone: 'Asia/Kolkata'
   }).format(date)
 }
+
+
+export const getAppState = (store: ElectronStore<StoreType>) => {
+  const appState = store.get("appState");
+
+  return {
+    initialized: appState.appInitialized,
+    loggedIn: !!appState.currentUserId,
+    trackingEnabled: appState.trackingEnabled,
+    userId: appState.currentUserId,
+    attendanceId: appState.attendanceId,
+  };
+};
 
 
 export function updateAppState(
@@ -52,20 +85,7 @@ export async function syncToServer(sessions: TSession[]): Promise<{ success: boo
 
 export const isLoggedIn = async (
   userId: string,
-): Promise<
-  | {
-    loggedIn: boolean
-    attendanceId: string
-    loginTime: Date
-    status: 'working' | 'break' | 'logged_out'
-  }
-  | {
-    loggedIn: boolean
-    attendanceId: null
-    loginTime: null
-    status: null
-  }
-> => {
+): Promise<SessionStatus> => {
   try {
     const date = new Date().toISOString()
     const res = await fetch(`${API_ENDPOINT}/user/is-logged-in`, {
@@ -133,11 +153,20 @@ export const stopIdleSession = async ({
 
 }
 
-export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
+export const sendHeartBeat = ({
+  store,
+  mainWindow,
+  clearCurrentSession,
+  clearPendingSessions
+}: {
+  store: ElectronStore<StoreType>
+  mainWindow: BrowserWindow | null
+  clearCurrentSession: () => void
+  clearPendingSessions: () => void
+}) => {
 
   setInterval(async () => {
     const appState = store.get("appState")
-    const userInfo = store.get("userInfo")
     console.log("checking heartbeat")
     if (!appState.trackingEnabled) return
 
@@ -153,92 +182,107 @@ export const sendHeartBeat = (store: ElectronStore<StoreType>) => {
           time: new Date().toISOString()
         })
       })
-      const { data } = await resp.json()
 
-      console.log("is logged in", data)
-      if (!data.loggedIn) {
-        store.set("appState", {
-          ...appState,
-          trackingEnabled: false,
-          currentUserId: "",
-          attendanceId: "",
-        })
-        store.set('userInfo', {
-          ...userInfo,
-          attendanceId: ''
-
-        })
+      if (!resp.ok) {
+        throw new Error(
+          `Heartbeat failed: ${resp.status}`
+        )
       }
 
+      const { data } = await resp.json()
+
+      if (!data.loggedIn) {
+          ({
+          store,
+          mainWindow,
+          clearCurrentSession,
+          clearPendingSessions,
+          reason: "Attendance Expired",
+        });
+      }
     } catch (error) {
       console.log("heartbeat error -> ", error)
-      store.set("appState", {
-        ...appState,
-        trackingEnabled: false,
-        currentUserId: "",
-        attendanceId: "",
-      })
-      store.set('userInfo', {
-        ...userInfo,
-        attendanceId: ''
 
-      })
     }
   }, HEARTBEAT_CHECK_MS)
 }
 
-export const periodicValidation = (
-  {
-    store,
-    mainWindow,
-    clearCurrentSession,
-    clearPendingSessions
-  }: {
-    store: ElectronStore<StoreType>,
-    mainWindow: BrowserWindow | null,
-    clearCurrentSession: () => void,
-    clearPendingSessions: () => void
-  }) => {
-  setInterval(async () => {
 
-    if (ValidationRunning) return;
 
-    const appState = store.get('appState')
 
-    if (!appState.currentUserId) return
 
-    ValidationRunning = true;
-    try {
-      const session = await isLoggedIn(
-        appState.currentUserId
-      )
+export const handleAutoLogout = ({
+  store,
+  mainWindow,
+  clearCurrentSession,
+  clearPendingSessions,
+  reason = "Attendance Expired",
+}: AutoLogoutParams) => {
+  const userInfo = store.get("userInfo");
 
-      if (!session?.loggedIn) {
-        store.set('appState', {
-          trackingEnabled: false,
-          currentUserId: '',
-          attendanceId: '',
-          appInitialized: true
-        })
+  // Clear application state
+  store.set("appState", {
+    trackingEnabled: false,
+    currentUserId: "",
+    attendanceId: "",
+    appInitialized: true,
+  });
 
-        clearCurrentSession()
-        clearPendingSessions()
+  // Clear stored attendance
+  store.set("userInfo", {
+    ...userInfo,
+    attendanceId: "",
+  });
 
-        store.delete('currentSession')
+  // Clear activity state
+  clearCurrentSession();
+  clearPendingSessions();
 
-        mainWindow?.webContents.send(
-          'app:auto-logout', {
-          reason: "Attendance Expired"
-        }
-        )
+  store.delete("currentSession");
+
+  // Notify renderer
+  if (
+    mainWindow &&
+    !mainWindow.isDestroyed()
+  ) {
+    mainWindow.webContents.send(
+      "app:auto-logout",
+      {
+        reason,
       }
-    } catch (error) {
-      console.error('Periodic session validation failed:', error);
-    } finally {
-      ValidationRunning = false;
+    );
+  }
+
+  console.log(
+    `User automatically logged out: ${reason}`
+  );
+};
+
+export const quitApp = async ({app, isQuitting,blockerId, powerSaveBlocker, closeCurrentSession}) => {
+  if (isQuitting) return;
+
+  isQuitting = true;
+
+  try {
+    if (
+      blockerId !== null &&
+      powerSaveBlocker.isStarted(blockerId)
+    ) {
+      powerSaveBlocker.stop(blockerId);
+      blockerId = null;
     }
-  }, PERIODIC_CHECK_MS)
-}
 
+    const closed = closeCurrentSession();
 
-
+    if (closed) {
+      await syncToServer([closed]);
+    }
+  } catch (error) {
+    console.error(
+      "Error during app shutdown:",
+      error
+    );
+  } finally {
+    app.quit();
+  }
+};

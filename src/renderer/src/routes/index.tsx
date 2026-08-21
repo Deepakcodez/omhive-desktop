@@ -88,7 +88,7 @@ function RouteComponent() {
         }
 
 
-        const auth = await window.api.isLoggedIn()
+        const auth = await window.api.syncApp()
 
         console.log({
           auth,

@@ -5,6 +5,7 @@ import { ActivityIpc } from './activity'
 import type ElectronStore from 'electron-store'
 import { AttendanceIpc } from './attendance'
 import { AdminIpc } from './admin'
+import { SyncAppIpc } from './syncIpc'
 
 export function IPC_Handlers({
   store,
@@ -16,4 +17,5 @@ export function IPC_Handlers({
   AttendanceIpc()
   AlertIpc()
   AdminIpc()
+  SyncAppIpc({ store })
 }
