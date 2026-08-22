@@ -17,8 +17,6 @@ import { IPC_Handlers } from './ipc'
 import { isLoggedIn, sendHeartBeat, SessionStatus, startIdleSession, stopIdleSession, syncToServer } from './utils'
 import { randomUUID } from 'crypto'
 
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 
 
 
@@ -32,9 +30,22 @@ let pendingSessions: TSession[] = []
 let UserSession: SessionStatus | null = null
 let mainWindow: BrowserWindow | null = null
 let idleStartedAt: number | null = null
+
+/**
+ * Whether we are already in the process of quitting.
+ * Guards against duplicate quit calls from `app:close` IPC / `before-quit`.
+ */
+let isQuitting = false
+
+/**
+ * Whether the exit-confirmation modal is currently shown in the renderer.
+ * Prevents the native `close` event from re-triggering the modal while it
+ * is already open.
+ */
 let askingClose = false
+
+/** Power-save blocker ID — held while the app is running. */
 let blockerId: number | null = null;
-let isQuitting = false;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 // not current session  return null
@@ -88,36 +99,28 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => mainWindow!.show())
 
-  mainWindow.on('close', async (e) => {
-    if (isQuitting) {
-      return;
-    }
+  mainWindow.on('close', (e) => {
+    // Allow close when we are already in the graceful quit sequence
+    if (isQuitting) return
 
+    // Modal already open — ignore this duplicate close event
     if (askingClose) {
-      return;
+      e.preventDefault()
+      return
     }
 
-    if (!askingClose) {
-      e.preventDefault()
-      await wait(5000)
-      askingClose = true
-      mainWindow?.webContents.send('app:before-close')
-      // app.quit()
-      // mainWindow?.webContents.send('app:quitting')
-    }
+    // Prevent the default close so we can show the exit-confirmation modal.
+    // The renderer will either:
+    //   • call window.api.closeCancelled() → user dismissed → reset askingClose
+    //   • call window.api.closeApp()       → user confirmed → triggers quit flow
+    e.preventDefault()
+    askingClose = true
+    mainWindow?.webContents.send('app:before-close')
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
-  })
-
-  ipcMain.on('app:close-cancelled', () => {
-    askingClose = false
-  })
-
-  ipcMain.on('app:close', () => {
-    app.quit()
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -126,6 +129,57 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
+
+
+// ── IPC: close-flow handlers ─────────────────────────────────────────────────
+// Registered at module level (NOT inside createWindow) so they are set up
+// exactly once. Putting them inside createWindow causes listener accumulation
+// on macOS when the window is re-created via the dock 'activate' event.
+
+/**
+ * User dismissed the exit modal → reset the flag so the next close attempt
+ * triggers the modal again.
+ */
+ipcMain.on('app:close-cancelled', () => {
+  askingClose = false
+})
+
+/**
+ * User confirmed quitting (chose logout or break-and-exit in the modal).
+ *
+ * Sequence:
+ *  1. Guard against duplicate calls.
+ *  2. Send `app:quitting` → renderer shows a full-screen loader so the user
+ *     knows the app is busy and has NOT frozen.
+ *  3. Stop the power-save blocker.
+ *  4. Flush the current tracking session to the server.
+ *  5. Call app.quit() to let Electron complete the teardown.
+ */
+ipcMain.on('app:close', async () => {
+  if (isQuitting) return
+  isQuitting = true
+
+  // Show the quitting loader in the renderer immediately
+  mainWindow?.webContents.send('app:quitting')
+
+  try {
+    // Release the power-save blocker
+    if (blockerId !== null && powerSaveBlocker.isStarted(blockerId)) {
+      powerSaveBlocker.stop(blockerId)
+      blockerId = null
+    }
+
+    // Flush the current tracking session to the server before closing
+    const closed = closeCurrentSession()
+    if (closed) {
+      await syncToServer([closed])
+    }
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error)
+  } finally {
+    app.quit()
+  }
+})
 
 
 const sendGlobalError = (
@@ -466,11 +520,15 @@ process.on("unhandledRejection", (reason) => {
 
 
 
-// Flush any open session before quitting
-
-
-app.on("before-quit", async (_event) => {
-
+// ── Safety-net cleanup on quit ───────────────────────────────────────────────
+// `before-quit` fires for every quit path (including Cmd+Q on macOS and
+// Task-Manager kills). We use it to guarantee the power-save blocker is
+// released even if the normal `app:close` IPC path was bypassed.
+app.on('before-quit', () => {
+  if (blockerId !== null && powerSaveBlocker.isStarted(blockerId)) {
+    powerSaveBlocker.stop(blockerId)
+    blockerId = null
+  }
 });
 
 app.on('window-all-closed', () => {

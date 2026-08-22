@@ -28,7 +28,7 @@ export function AdminIpc() {
             console.log("created user-->", data)
             return data
         } catch (error) {
-            console.error('Error  in resuming user:', error)
+            console.error('Error  in creating user:', error)
             return {
                 data: null,
                 success: false,
@@ -55,7 +55,7 @@ export function AdminIpc() {
             console.log("deactivated user-->", data)
             return data
         } catch (error) {
-            console.error('Error  in resuming user:', error)
+            console.error('Error  in deactivate user:', error)
             return {
                 data: null,
                 success: false,
@@ -82,7 +82,7 @@ export function AdminIpc() {
             console.log("deactivated user-->", data)
             return data
         } catch (error) {
-            console.error('Error  in resuming user:', error)
+            console.error('Error  in activate user:', error)
             return {
                 data: null,
                 success: false,

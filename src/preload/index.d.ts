@@ -179,7 +179,13 @@ interface Api {
     message: string
   }>
   logoutUser: (payload: { attendanceId: string }) => Promise<{
-    alreadyLoggedOut: false
+    alreadyLoggedOut: boolean
+    logoutTime: Date
+    totalWorkSeconds: number
+    totalBreakSeconds: number
+  }>
+  logoutAndExitApp: (payload: { attendanceId: string }) => Promise<{
+    alreadyLoggedOut: boolean
     logoutTime: Date
     totalWorkSeconds: number
     totalBreakSeconds: number
@@ -228,7 +234,7 @@ interface Api {
     message: string
     type?: 'info' | 'warning' | 'error'
   }) => Promise<void>
-  onBeforeClose: (callback: () => void) => void
+  onBeforeClose: (callback: () => void) => () => void
   closeCancelled: () => void
   closeApp: () => void
   syncApp: () => ({

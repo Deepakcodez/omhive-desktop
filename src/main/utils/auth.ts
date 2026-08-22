@@ -4,13 +4,12 @@ import { API_ENDPOINT } from "../constants"
 import { updateAppState } from "."
 
 export const handleUserLogout = async ({
-    store,
     attendanceId
 }: {
-    store: ElectronStore<StoreType>,
     attendanceId: string
 }) => {
     try {
+        console.log('logging out user', attendanceId)
         const response = await fetch(API_ENDPOINT + '/user/logout', {
             method: 'POST',
             headers: {
@@ -23,20 +22,12 @@ export const handleUserLogout = async ({
             throw new Error(`HTTP error! status: ${response.status}`)
         }
         const { data } = await response.json()
-
-        updateAppState(store, {
-            trackingEnabled: false,
-            currentUserId: '',
-            attendanceId: ''
-        })
+        console.log('logout response', data)
+        
         return data
     } catch (error) {
-        console.error('Error  in resuming user:', error)
-        updateAppState(store, {
-            trackingEnabled: false,
-            currentUserId: '',
-            attendanceId: ''
-        })
+        console.error('Error  in logging out user:', error)
+        
         return null
     }
 }

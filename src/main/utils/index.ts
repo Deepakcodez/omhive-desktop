@@ -192,7 +192,9 @@ export const sendHeartBeat = ({
       const { data } = await resp.json()
 
       if (!data.loggedIn) {
-          ({
+        // Session expired on the server — force a local logout so the
+        // renderer returns to the login screen and tracking stops.
+        handleAutoLogout({
           store,
           mainWindow,
           clearCurrentSession,

@@ -71,7 +71,7 @@ const api = {
   breakUser: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:break', payload),
   resumeUser: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:resume', payload),
   logoutUser: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:logout', payload),
-
+  logoutAndExitApp: (payload: { attendanceId: string }) => ipcRenderer.invoke('user:logout-and-exit', payload),
   getUserActivity: (payload: { userId: string; attendanceId: string; date: string; limit: number }) =>
     ipcRenderer.invoke('activity:track', payload),
   getUserGraphActivity: (payload: { userId: string; attendanceId: string; date: string; }) =>
@@ -80,7 +80,14 @@ const api = {
   alert: (payload: { title: string; message: string; type?: 'info' | 'warning' | 'error' }) =>
     ipcRenderer.invoke('system:alert', payload),
   onBeforeClose: (callback: () => void) => {
-    ipcRenderer.on('app:before-close', callback)
+    // Wrap the callback so we have a stable reference for removeListener
+    const listener = () => callback()
+    ipcRenderer.on('app:before-close', listener)
+
+    // Return cleanup function to prevent listener accumulation on re-mount
+    return () => {
+      ipcRenderer.removeListener('app:before-close', listener)
+    }
   },
   closeCancelled: () => {
     ipcRenderer.send('app:close-cancelled')

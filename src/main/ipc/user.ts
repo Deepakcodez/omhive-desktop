@@ -3,7 +3,7 @@ import os from 'os'
 import { API_ENDPOINT } from '../constants'
 import { StoreType } from '../types'
 import type ElectronStore from 'electron-store'
-import { getLocalDate,  updateAppState } from '../utils'
+import { getLocalDate, updateAppState } from '../utils'
 import { handleUserLogout } from '../utils/auth'
 
 const HOSTNAME = os.hostname()
@@ -134,20 +134,70 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
     }
   })
   ipcMain.handle('user:logout', async (_, payload: { attendanceId: string }) => {
+    console.log('user:logout payload', payload)
     try {
       const data = await handleUserLogout({
-        store,
         attendanceId: payload.attendanceId
       })
+      console.log('user:logout response', data)
+      if (data !== null) {
+        updateAppState(store, {
+          trackingEnabled: false,
+          currentUserId: '',
+          attendanceId: ''
+        })
+      }
       return data
     } catch (error) {
-      console.error('Error  in resuming user:', error)
+      console.error('Error  in loggin out user:', error)
       updateAppState(store, {
         trackingEnabled: false,
         currentUserId: '',
         attendanceId: ''
       })
       return null
+    }
+  })
+  ipcMain.handle('user:logout-and-exit', async (_, payload: { attendanceId: string }) => {
+    console.log('user:logout-and-exit payload', payload)
+    try {
+      const data = await handleUserLogout({
+        attendanceId: payload.attendanceId
+      })
+      console.log('user:logout-and-exit response', data)
+
+      // Always clean up store state regardless of API response
+      updateAppState(store, {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: ''
+      })
+
+      // Clear stored attendanceId from userInfo as well
+      const userInfo = store.get('userInfo')
+      store.set('userInfo', { ...userInfo, attendanceId: '' })
+
+      return data
+    } catch (error) {
+      console.error('Error in logout-and-exit:', error)
+
+      // Clean up store even on failure so tracking stops
+      updateAppState(store, {
+        trackingEnabled: false,
+        currentUserId: '',
+        attendanceId: ''
+      })
+
+      const userInfo = store.get('userInfo')
+      store.set('userInfo', { ...userInfo, attendanceId: '' })
+
+      return null
+    } finally {
+      // Trigger the full graceful quit sequence:
+      // → flushes current tracking session to server
+      // → stops power-save blocker
+      // → calls app.quit()
+      ipcMain.emit('app:close')
     }
   })
   ipcMain.handle('user:set-info', async (_, payload: { userId: string; name: string }) => {
@@ -166,7 +216,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       const { data } = await response.json()
       return data
     } catch (error) {
-      console.error('Error  in resuming user:', error)
+      console.error('Error  in logout user:', error)
       return null
     }
   })
@@ -186,7 +236,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       const data = await response.json()
       return data
     } catch (error) {
-      console.error('Error  in resuming user:', error)
+      console.error('Error  in listing user:', error)
       return {
         data: null,
         success: false,
@@ -212,7 +262,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       console.log("userf,", data)
       return data
     } catch (error) {
-      console.error('Error  in resuming user:', error)
+      console.error('Error  in user with login logout:', error)
       return {
         data: null,
         success: false,
@@ -237,7 +287,7 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       console.log("userf,", data)
       return data
     } catch (error) {
-      console.error('Error  in resuming user:', error)
+      console.error('Error  in user attendance:', error)
       return {
         data: null,
         success: false,

@@ -4,9 +4,10 @@ import toast from 'react-hot-toast'
 
 type Props = {
     setShowExitModal: Dispatch<SetStateAction<boolean>>
+    setIsQuitting: Dispatch<SetStateAction<boolean>>
 }
 
-export const ExitConfirmation = ({ setShowExitModal }: Props) => {
+export const ExitConfirmation = ({ setShowExitModal, setIsQuitting }: Props) => {
     const handleCloseModal = () => {
         window.api.closeCancelled()
         setShowExitModal(false)
@@ -25,14 +26,15 @@ export const ExitConfirmation = ({ setShowExitModal }: Props) => {
     }
     const handleLogout = async () => {
         const attendanceId = localStorage.getItem('attendanceId') || ''
-        const resp = await window.api.logoutUser({ attendanceId: attendanceId })
-        if (resp === null) {
-            toast.error('Something went wrong')
-            return
-        }
-        localStorage.removeItem("attendanceId")
-        localStorage.removeItem("status")
-        localStorage.removeItem("breakId")
+
+        // Clean up localStorage immediately — the main process will always
+        // trigger app.quit() after this call (even on API error), so we must
+        // clear local state before the window is destroyed.
+        localStorage.removeItem('attendanceId')
+        localStorage.removeItem('status')
+        localStorage.removeItem('breakId')
+
+        await window.api.logoutAndExitApp({ attendanceId })
     }
     return (
         <div className="fixed inset-0 z-9999 bg-black/50 backdrop-blur-3xl flex items-center justify-center">
