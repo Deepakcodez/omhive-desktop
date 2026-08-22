@@ -15,8 +15,8 @@ export const SyncAppIpc = ({
             loggedIn: !!appState.currentUserId,
             trackingEnabled: appState.trackingEnabled,
             userId: appState.currentUserId,
-            attendanceId: appState.attendanceId
+            attendanceId: appState.attendanceId,
+            isAdmin: appState.isAdmin ?? false
         }
     })
-
 }

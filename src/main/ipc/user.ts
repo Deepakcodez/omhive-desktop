@@ -31,27 +31,30 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       })
 
       const data = await response.json()
-      console.log('data', data)
+      console.log('data of login line 34 in user.ts ipc', data)
       if (!store) {
         return data
       }
       store.set('userInfo', {
         userId: data.data.userId,
+        isAdmin: data.data.isAdmin,
         userName: data.data.username,
         attendanceId: data.data.attendanceId
       })
 
 
+      const isAdmin: boolean = data.data.isAdmin ?? false
+
       updateAppState(store, {
-        trackingEnabled: true,
+        trackingEnabled: isAdmin ? false : true, // admins are never tracked
         currentUserId: data.data.userId,
-        attendanceId: data.data.attendanceId
+        attendanceId: data.data.attendanceId,
+        isAdmin
       })
       return {
         data: data.data,
         success: true,
-        message: 'User logged in',
-        isAdmin: data.isAdmin
+        message: 'User logged in'
       }
     } catch (error) {
       console.error('Error logging in user:', error)
@@ -117,8 +120,9 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
+      const appState = store.get('appState')
       updateAppState(store, {
-        trackingEnabled: true
+        trackingEnabled: appState.isAdmin ? false : true
       })
       return data
     } catch (error) {
@@ -144,8 +148,11 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
         updateAppState(store, {
           trackingEnabled: false,
           currentUserId: '',
-          attendanceId: ''
+          attendanceId: '',
+          isAdmin: false
         })
+        const userInfo = store.get('userInfo')
+        store.set('userInfo', { ...userInfo, attendanceId: '', isAdmin: false })
       }
       return data
     } catch (error) {
@@ -153,8 +160,11 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       updateAppState(store, {
         trackingEnabled: false,
         currentUserId: '',
-        attendanceId: ''
+        attendanceId: '',
+        isAdmin: false
       })
+      const userInfo = store.get('userInfo')
+      store.set('userInfo', { ...userInfo, attendanceId: '', isAdmin: false })
       return null
     }
   })
@@ -170,12 +180,13 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       updateAppState(store, {
         trackingEnabled: false,
         currentUserId: '',
-        attendanceId: ''
+        attendanceId: '',
+        isAdmin: false
       })
 
-      // Clear stored attendanceId from userInfo as well
+      // Clear stored attendanceId and admin status from userInfo as well
       const userInfo = store.get('userInfo')
-      store.set('userInfo', { ...userInfo, attendanceId: '' })
+      store.set('userInfo', { ...userInfo, attendanceId: '', isAdmin: false })
 
       return data
     } catch (error) {
@@ -185,11 +196,12 @@ export function UserIpc({ store }: { store: ElectronStore<StoreType> }) {
       updateAppState(store, {
         trackingEnabled: false,
         currentUserId: '',
-        attendanceId: ''
+        attendanceId: '',
+        isAdmin: false
       })
 
       const userInfo = store.get('userInfo')
-      store.set('userInfo', { ...userInfo, attendanceId: '' })
+      store.set('userInfo', { ...userInfo, attendanceId: '', isAdmin: false })
 
       return null
     } finally {

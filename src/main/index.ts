@@ -20,9 +20,14 @@ import { randomUUID } from 'crypto'
 
 
 
+import type ElectronStore from 'electron-store'
+
 // ── System identity (resolved once at startup) ─────────────────────────────
 const HOSTNAME = os.hostname()
 const USERNAME = os.userInfo().username
+
+// ── Store instance ──────────────────────────────────────────────────────────
+let appGlobalStore: ElectronStore<StoreType> | null = null
 
 // ── Session state ───────────────────────────────────────────────────────────
 let currentSession: TSession | null = null
@@ -30,6 +35,21 @@ let pendingSessions: TSession[] = []
 let UserSession: SessionStatus | null = null
 let mainWindow: BrowserWindow | null = null
 let idleStartedAt: number | null = null
+
+/**
+ * Reset isAdmin in electron store to false on exit.
+ */
+function resetAdminState(): void {
+  if (!appGlobalStore) return
+  const userInfo = appGlobalStore.get('userInfo')
+  if (userInfo) {
+    appGlobalStore.set('userInfo', { ...userInfo, isAdmin: false })
+  }
+  const appState = appGlobalStore.get('appState')
+  if (appState) {
+    appGlobalStore.set('appState', { ...appState, isAdmin: false })
+  }
+}
 
 /**
  * Whether we are already in the process of quitting.
@@ -163,6 +183,9 @@ ipcMain.on('app:close', async () => {
   mainWindow?.webContents.send('app:quitting')
 
   try {
+    // Reset admin status in store on exit
+    resetAdminState()
+
     // Release the power-save blocker
     if (blockerId !== null && powerSaveBlocker.isStarted(blockerId)) {
       powerSaveBlocker.stop(blockerId)
@@ -207,18 +230,20 @@ app.whenReady().then(async () => {
       userInfo: {
         userId: '',
         userName: '',
-        attendanceId: ''
+        attendanceId: '',
+        isAdmin: false
       },
       appState: {
         trackingEnabled: false,
         currentUserId: '',
         attendanceId: '',
-        appInitialized: false
+        appInitialized: false,
+        isAdmin: false
       },
       sessions: []
     }
   })
-
+  appGlobalStore = store
 
   const userInfo = store.get('userInfo')
 
@@ -227,10 +252,12 @@ app.whenReady().then(async () => {
       UserSession = await isLoggedIn(userInfo.userId);
 
       if (UserSession.loggedIn) {
+        const shouldTrack = UserSession.status === WorkStatus.WORKING && !UserSession.isAdmin;
         store.set("appState", {
-          trackingEnabled: UserSession.status === WorkStatus.WORKING,
+          trackingEnabled: shouldTrack,
           currentUserId: userInfo.userId,
           attendanceId: UserSession.attendanceId,
+          isAdmin: UserSession.isAdmin,
           appInitialized: true,
         });
       } else {
@@ -239,6 +266,7 @@ app.whenReady().then(async () => {
           currentUserId: "",
           attendanceId: "",
           appInitialized: true,
+          isAdmin: false
         });
 
         store.set("userInfo", {
@@ -309,11 +337,15 @@ app.whenReady().then(async () => {
   // ── Poll: detect active window every second ─────────────────────────────
   setInterval(async () => {
     const appState = store.get('appState')
-    if (!appState.trackingEnabled) return
+    if (!appState.trackingEnabled || appState.isAdmin) {
+      idleStartedAt = null
+      currentSession = null
+      return
+    }
 
     const idleTime = powerMonitor.getSystemIdleTime()
     // Send live idle time to renderer
-    mainWindow?.webContents.send('idle-time', idleTime)
+    // mainWindow?.webContents.send('idle-time', idleTime)
 
     // stop idle time
     if (
@@ -321,12 +353,6 @@ app.whenReady().then(async () => {
       idleTime < IDLE_THRESHOLD_SEC
     ) {
       const endTime = Date.now()
-
-      console.log(
-        "User returned from idle:",
-        (endTime - idleStartedAt) / 1000,
-        "seconds"
-      )
 
       try {
         await stopIdleSession({
@@ -346,18 +372,17 @@ app.whenReady().then(async () => {
       // User went idle — close any open session
 
       if (!idleStartedAt) {
-        idleStartedAt = Date.now()
+        idleStartedAt = Date.now() - idleTime * 1000;
 
-        console.log(
-          "User became idle at",
-          new Date(idleStartedAt)
-        )
-        console.log("will send ideal session to server here")
-        await startIdleSession({
-          attendanceId: appState.attendanceId || '',
-          userId: appState.currentUserId || '',
-          startTime: new Date(idleStartedAt).toISOString()
-        })
+        try {
+          await startIdleSession({
+            attendanceId: appState.attendanceId || '',
+            userId: appState.currentUserId || '',
+            startTime: new Date(idleStartedAt).toISOString()
+          })
+        } catch (error) {
+          console.error("Failed to start idle session", error)
+        }
       }
 
 
@@ -434,14 +459,14 @@ app.whenReady().then(async () => {
     const snapshot = getCurrentSessionSnapshot()
 
     if (!snapshot || !store) return
-    if (!appState.trackingEnabled) return
+    if (!appState.trackingEnabled || appState.isAdmin) return
     store.set('currentSession', snapshot)
   }, 6_000)
 
   // store activity locally after 1 minutes
   setInterval(() => {
     const appState = store.get('appState')
-    if (!appState.trackingEnabled) return
+    if (!appState.trackingEnabled || appState.isAdmin) return
     if (pendingSessions.length === 0) return
 
     if (store) {
@@ -525,6 +550,7 @@ process.on("unhandledRejection", (reason) => {
 // Task-Manager kills). We use it to guarantee the power-save blocker is
 // released even if the normal `app:close` IPC path was bypassed.
 app.on('before-quit', () => {
+  resetAdminState()
   if (blockerId !== null && powerSaveBlocker.isStarted(blockerId)) {
     powerSaveBlocker.stop(blockerId)
     blockerId = null

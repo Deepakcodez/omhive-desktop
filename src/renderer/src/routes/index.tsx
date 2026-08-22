@@ -91,7 +91,7 @@ function RouteComponent() {
         const auth = await window.api.syncApp()
 
         console.log({
-          auth,
+          auth, 
           userId: localStorage.getItem("userId"),
           userName: localStorage.getItem("userName")
         })
@@ -105,6 +105,11 @@ function RouteComponent() {
           localStorage.removeItem("attendanceId")
           localStorage.removeItem("breakId")
           setWorkStatus(null)
+          return
+        }
+
+        if (auth.loggedIn && auth.isAdmin) {
+          router.navigate({ to: '/admin' })
           return
         }
 
@@ -143,10 +148,14 @@ function RouteComponent() {
         return
       }
       const resp = await window.api.loginUser({ username })
-      console.log(resp)
-      if (resp?.isAdmin) {
+      console.log("login resp", resp)
+      if (resp?.data?.isAdmin) {
         console.log("admin")
-        window.location.href = '/admin'
+        if (resp.data.userId) {
+          localStorage.setItem('userId', resp.data.userId)
+          localStorage.setItem('userName', resp.data.userName)
+        }
+        router.navigate({ to: '/admin' })
         return
       }
       if (!resp.success || resp.data === null) {

@@ -18,6 +18,7 @@ export type UserInfoType = {
   userId: string
   userName: string
   attendanceId: string
+  isAdmin: boolean
 }
 
 export type AppState = {
@@ -25,6 +26,7 @@ export type AppState = {
   currentUserId: string | null
   attendanceId: string | null
   appInitialized: boolean
+  isAdmin: boolean
 }
 
 

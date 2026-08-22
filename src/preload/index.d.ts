@@ -152,10 +152,10 @@ interface Api {
       attendanceId: string
       existing: boolean
       loginTime: Date
+      isAdmin: boolean
       status: "working" | "break"
     } | null
     success: boolean
-    isAdmin?: boolean
     message: string
   }>
   breakUser: (payload: { attendanceId: string }) => Promise<{
@@ -237,13 +237,14 @@ interface Api {
   onBeforeClose: (callback: () => void) => () => void
   closeCancelled: () => void
   closeApp: () => void
-  syncApp: () => ({
-    initialized: boolean,
-    loggedIn: boolean,
-    trackingEnabled: boolean,
-    userId: string,
+  syncApp: () => Promise<{
+    initialized: boolean
+    loggedIn: boolean
+    trackingEnabled: boolean
+    userId: string
     attendanceId: string
-  })
+    isAdmin: boolean
+  }>
   onAutoLogout: (
     callback: () => void
   ) => () => void

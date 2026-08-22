@@ -22,6 +22,7 @@ export const ExitConfirmation = ({ setShowExitModal, setIsQuitting }: Props) => 
         }
         localStorage.setItem('breakId', resp.data?.breakId)
         localStorage.setItem('status', resp.data?.status)
+        setIsQuitting(true)
         window.api.closeApp()
     }
     const handleLogout = async () => {
@@ -34,6 +35,7 @@ export const ExitConfirmation = ({ setShowExitModal, setIsQuitting }: Props) => 
         localStorage.removeItem('status')
         localStorage.removeItem('breakId')
 
+        setIsQuitting(true)
         await window.api.logoutAndExitApp({ attendanceId })
     }
     return (

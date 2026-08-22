@@ -1,17 +1,19 @@
 import ElectronStore from 'electron-store'
-import { API_ENDPOINT, HEARTBEAT_CHECK_MS, PERIODIC_CHECK_MS } from '../constants'
+import { API_ENDPOINT, HEARTBEAT_CHECK_MS } from '../constants'
 import type { AppState, StoreType, TSession } from '../types'
 import { BrowserWindow } from 'electron'
 
 
 export type SessionStatus = {
   loggedIn: boolean
+  isAdmin: boolean
   attendanceId: string
   loginTime: Date
   status: 'working' | 'break' | 'logged_out'
 }
   | {
     loggedIn: boolean
+    isAdmin: boolean
     attendanceId: null
     loginTime: null
     status: null
@@ -43,6 +45,7 @@ export const getAppState = (store: ElectronStore<StoreType>) => {
     trackingEnabled: appState.trackingEnabled,
     userId: appState.currentUserId,
     attendanceId: appState.attendanceId,
+    isAdmin: appState.isAdmin ?? false,
   };
 };
 
@@ -100,6 +103,7 @@ export const isLoggedIn = async (
     console.error('[isLoggedIn] Failed:', err)
     return {
       loggedIn: false,
+      isAdmin: false,
       attendanceId: null,
       loginTime: null,
       status: null
@@ -168,7 +172,7 @@ export const sendHeartBeat = ({
   setInterval(async () => {
     const appState = store.get("appState")
     console.log("checking heartbeat")
-    if (!appState.trackingEnabled) return
+    if (!appState.trackingEnabled || appState.isAdmin) return
 
     try {
       const resp = await fetch(`${API_ENDPOINT}/attendance/heartbeat`, {
@@ -234,6 +238,7 @@ export const handleAutoLogout = ({
   store.set("userInfo", {
     ...userInfo,
     attendanceId: "",
+    isAdmin: false,
   });
 
   // Clear activity state
@@ -260,7 +265,7 @@ export const handleAutoLogout = ({
   );
 };
 
-export const quitApp = async ({app, isQuitting,blockerId, powerSaveBlocker, closeCurrentSession}) => {
+export const quitApp = async ({ app, isQuitting, blockerId, powerSaveBlocker, closeCurrentSession }) => {
   if (isQuitting) return;
 
   isQuitting = true;
